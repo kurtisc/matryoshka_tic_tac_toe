@@ -9,3 +9,5 @@
 The computational requirements explode after 5 pieces.
 
 The 6 pieces of the video are unsolved.
+
+![Example game](media/example-game.png)
