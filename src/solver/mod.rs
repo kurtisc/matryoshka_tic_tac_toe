@@ -27,10 +27,10 @@ impl PartialEq for BestMove {
     }
 }
 
-pub fn get_min_max_move(game: Game) -> (usize, usize, usize) {
+pub fn get_min_max_move(game: &Game) -> (usize, usize, usize) {
     game.symmetry_range(Axis::Horizontal)
         .par_iter()
-        .map(|x| min_max_outer_loop(game.clone(), *x))
+        .map(|x| min_max_outer_loop(game, *x))
         .collect::<Vec<BestMove>>()
         .par_iter()
         .max()
@@ -38,30 +38,30 @@ pub fn get_min_max_move(game: Game) -> (usize, usize, usize) {
         .b_move
 }
 
-fn min_max_outer_loop(game: Game, i: usize) -> BestMove {
+fn min_max_outer_loop(game: &Game, i: usize) -> BestMove {
     *game
         .symmetry_range(Axis::Vertical)
         .par_iter()
-        .map(|x| min_max_inner_loop(game.clone(), i, *x))
+        .map(|x| min_max_inner_loop(game, i, *x))
         .collect::<Vec<BestMove>>()
         .par_iter()
         .max()
         .unwrap()
 }
 
-fn min_max_inner_loop(game: Game, i: usize, j: usize) -> BestMove {
+fn min_max_inner_loop(game: &Game, i: usize, j: usize) -> BestMove {
     let (_, o) = game.players.clone();
 
     *o.pieces
         .par_iter()
-        .map(|x| min_max_loop(game.clone(), i, j, *x))
+        .map(|x| min_max_loop(game, i, j, *x))
         .collect::<Vec<BestMove>>()
         .par_iter()
         .max()
         .unwrap()
 }
 
-fn min_max_loop(game: Game, i: usize, j: usize, piece: usize) -> BestMove {
+fn min_max_loop(game: &Game, i: usize, j: usize, piece: usize) -> BestMove {
     let mut best_score = std::i64::MIN;
     let mut best_move = (0, 0, 0);
 
@@ -70,7 +70,7 @@ fn min_max_loop(game: Game, i: usize, j: usize, piece: usize) -> BestMove {
 
         match new_game {
             Ok(x) => {
-                let tmp_score = min_search(x, std::i64::MIN, std::i64::MAX);
+                let tmp_score = min_search(&x, std::i64::MIN, std::i64::MAX);
 
                 if tmp_score > best_score {
                     best_score = tmp_score;
@@ -87,13 +87,13 @@ fn min_max_loop(game: Game, i: usize, j: usize, piece: usize) -> BestMove {
     }
 }
 
-fn min_loop(game: Game, alpha: i64, mut beta: i64, i: usize, j: usize, piece: usize) -> i64 {
+fn min_loop(game: &Game, alpha: i64, mut beta: i64, i: usize, j: usize, piece: usize) -> i64 {
     if game.piece_can_be_placed_at(&piece, i, j) {
         let new_game = game.clone().make_move(i, j, piece);
 
         match new_game {
             Ok(x) => {
-                let score = max_search(x, alpha, beta);
+                let score = max_search(&x, alpha, beta);
 
                 if score < beta {
                     beta = score;
@@ -108,7 +108,7 @@ fn min_loop(game: Game, alpha: i64, mut beta: i64, i: usize, j: usize, piece: us
     beta
 }
 
-fn min_inner_loop(game: Game, alpha: i64, beta: i64, i: usize, j: usize) -> i64 {
+fn min_inner_loop(game: &Game, alpha: i64, beta: i64, i: usize, j: usize) -> i64 {
     match game.winner() {
         Some(Winner::X) => return -10,
         Some(Winner::O) => return 10,
@@ -116,18 +116,18 @@ fn min_inner_loop(game: Game, alpha: i64, beta: i64, i: usize, j: usize) -> i64 
         _ => (),
     }
 
-    let (x, _) = game.players.clone();
+    let (x, _) = &game.players;
 
     *x.pieces
         .par_iter()
-        .map(|x| min_loop(game.clone(), alpha, beta, i, j, *x))
+        .map(|x| min_loop(&game, alpha, beta, i, j, *x))
         .collect::<Vec<i64>>()
         .par_iter()
         .min()
         .unwrap()
 }
 
-fn min_outer_loop(game: Game, alpha: i64, beta: i64, i: usize) -> i64 {
+fn min_outer_loop(game: &Game, alpha: i64, beta: i64, i: usize) -> i64 {
     match game.winner() {
         Some(Winner::X) => return -10,
         Some(Winner::O) => return 10,
@@ -138,14 +138,14 @@ fn min_outer_loop(game: Game, alpha: i64, beta: i64, i: usize) -> i64 {
     *game
         .symmetry_range(Axis::Vertical)
         .par_iter()
-        .map(|x| min_inner_loop(game.clone(), alpha, beta, i, *x))
+        .map(|x| min_inner_loop(&game, alpha, beta, i, *x))
         .collect::<Vec<i64>>()
         .par_iter()
         .min()
         .unwrap()
 }
 
-fn min_search(game: Game, alpha: i64, beta: i64) -> i64 {
+fn min_search(game: &Game, alpha: i64, beta: i64) -> i64 {
     match game.winner() {
         Some(Winner::X) => return -10,
         Some(Winner::O) => return 10,
@@ -156,14 +156,14 @@ fn min_search(game: Game, alpha: i64, beta: i64) -> i64 {
     *game
         .symmetry_range(Axis::Horizontal)
         .par_iter()
-        .map(|x| min_outer_loop(game.clone(), alpha, beta, *x))
+        .map(|x| min_outer_loop(&game, alpha, beta, *x))
         .collect::<Vec<i64>>()
         .par_iter()
         .min()
         .unwrap()
 }
 
-fn max_loop(game: Game, mut alpha: i64, beta: i64, i: usize, j: usize, piece: usize) -> i64 {
+fn max_loop(game: &Game, mut alpha: i64, beta: i64, i: usize, j: usize, piece: usize) -> i64 {
     match game.winner() {
         Some(Winner::X) => return -10,
         Some(Winner::O) => return 10,
@@ -176,7 +176,7 @@ fn max_loop(game: Game, mut alpha: i64, beta: i64, i: usize, j: usize, piece: us
 
         match new_game {
             Ok(x) => {
-                let score = min_search(x, alpha, beta);
+                let score = min_search(&x, alpha, beta);
 
                 if score > alpha {
                     alpha = score;
@@ -191,25 +191,25 @@ fn max_loop(game: Game, mut alpha: i64, beta: i64, i: usize, j: usize, piece: us
     alpha
 }
 
-fn max_inner_loop(game: Game, alpha: i64, beta: i64, i: usize, j: usize) -> i64 {
+fn max_inner_loop(game: &Game, alpha: i64, beta: i64, i: usize, j: usize) -> i64 {
     match game.winner() {
         Some(Winner::X) => return -10,
         Some(Winner::O) => return 10,
         Some(Winner::Tie) => return 0,
         _ => (),
     }
-    let (_, o) = game.players.clone();
+    let (_, o) = &game.players;
 
     *o.pieces
         .par_iter()
-        .map(|x| max_loop(game.clone(), alpha, beta, i, j, *x))
+        .map(|x| max_loop(game, alpha, beta, i, j, *x))
         .collect::<Vec<i64>>()
         .par_iter()
         .max()
         .unwrap()
 }
 
-fn max_outer_loop(game: Game, alpha: i64, beta: i64, i: usize) -> i64 {
+fn max_outer_loop(game: &Game, alpha: i64, beta: i64, i: usize) -> i64 {
     match game.winner() {
         Some(Winner::X) => return -10,
         Some(Winner::O) => return 10,
@@ -220,14 +220,14 @@ fn max_outer_loop(game: Game, alpha: i64, beta: i64, i: usize) -> i64 {
     *game
         .symmetry_range(Axis::Vertical)
         .par_iter()
-        .map(|x| max_inner_loop(game.clone(), alpha, beta, i, *x))
+        .map(|x| max_inner_loop(&game, alpha, beta, i, *x))
         .collect::<Vec<i64>>()
         .par_iter()
         .max()
         .unwrap()
 }
 
-fn max_search(game: Game, alpha: i64, beta: i64) -> i64 {
+fn max_search(game: &Game, alpha: i64, beta: i64) -> i64 {
     match game.winner() {
         Some(Winner::X) => return -10,
         Some(Winner::O) => return 10,
@@ -238,7 +238,7 @@ fn max_search(game: Game, alpha: i64, beta: i64) -> i64 {
     *game
         .symmetry_range(Axis::Horizontal)
         .par_iter()
-        .map(|x| max_outer_loop(game.clone(), alpha, beta, *x))
+        .map(|x| max_outer_loop(&game, alpha, beta, *x))
         .collect::<Vec<i64>>()
         .par_iter()
         .max()

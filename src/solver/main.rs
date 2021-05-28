@@ -24,7 +24,7 @@ fn main() {
 
         let (row, col, size) = match game.current_player_kind() {
             PlayerKind::X => prompt_move(),
-            PlayerKind::O => get_min_max_move(game.clone()),
+            PlayerKind::O => get_min_max_move(&game),
         };
 
         match game.clone().make_move(row, col, size) {

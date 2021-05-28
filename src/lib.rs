@@ -126,7 +126,7 @@ mod tests {
         game = game.make_move(2, 1, 1).unwrap();
         game = game.make_move(1, 2, 1).unwrap();
         game = game.make_move(0, 1, 0).unwrap();
-        let (i, j, k) = get_min_max_move(game.clone());
+        let (i, j, k) = get_min_max_move(&game);
         game = game.make_move(i, j, k).unwrap();
         assert_eq!(game.winner().unwrap(), Winner::O);
     }
@@ -136,17 +136,17 @@ mod tests {
         let mut game = Game::new_with_size(3);
         game = game.make_move(2, 1, 0).unwrap();
 
-        let (i, j, k) = get_min_max_move(game.clone());
+        let (i, j, k) = get_min_max_move(&game);
         game = game.make_move(i, j, k).unwrap();
 
         game = game.make_move(2, 0, 1).unwrap();
 
-        let (i, j, k) = get_min_max_move(game.clone());
+        let (i, j, k) = get_min_max_move(&game);
         game = game.make_move(i, j, k).unwrap();
 
         game = game.make_move(2, 2, 2).unwrap();
 
-        let (i, j, k) = get_min_max_move(game.clone());
+        let (i, j, k) = get_min_max_move(&game);
         game = game.make_move(i, j, k).unwrap();
         assert_eq!(game.winner().unwrap(), Winner::O);
     }
@@ -156,7 +156,7 @@ mod tests {
         let mut game = Game::new_with_size(3);
         game = game.make_move(2, 1, 0).unwrap();
 
-        let (i, j, k) = get_min_max_move(game.clone());
+        let (i, j, k) = get_min_max_move(&game);
         game = game.make_move(i, j, k).unwrap();
         assert!(game.tiles[1][1] != None);
     }
