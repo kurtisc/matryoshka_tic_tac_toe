@@ -37,6 +37,12 @@ pub type Tile = Option<(PlayerKind, usize)>;
 pub type Tiles = [[Tile; 3]; 3];
 
 #[derive(Debug, Clone, Copy, PartialEq)]
+pub enum Axis {
+    Horizontal,
+    Vertical,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Winner {
     X,
     O,
@@ -76,16 +82,11 @@ impl Game {
         }
     }
 
-    pub fn make_move(mut self, row: usize, col: usize, size: usize) -> Game {
+    pub fn make_move(mut self, row: usize, col: usize, size: usize) -> Result<Game, &'static str> {
         if let Some(other_tile) = self.tiles[row][col] {
             let (_, other_size) = other_tile;
             if other_size >= size {
-                eprintln!(
-                    "The tile at position {}{} already has a bigger piece in it!",
-                    row + 1,
-                    (b'A' + col as u8) as char
-                );
-                return self;
+                return Err("The tile already has a bigger piece in it!");
             }
         }
 
@@ -97,7 +98,7 @@ impl Game {
         };
 
         if playable_piece != size {
-            eprintln!("You don't have a tile with the size {}", size);
+            return Err("You don't have a tile with that size");
         }
 
         self.tiles[row][col] = Some((self.current_player_kind, size));
@@ -111,7 +112,7 @@ impl Game {
 
         self.update_winner(row, col);
 
-        self
+        Ok(self)
     }
 
     fn update_winner(&mut self, row: usize, col: usize) {
@@ -211,6 +212,20 @@ impl Game {
     }
 
     pub fn piece_can_be_placed_at(&self, piece: &usize, i: usize, j: usize) -> bool {
+        let (x, o) = &self.players;
+
+        if self.current_player_kind == PlayerKind::X {
+            match x.pieces.binary_search(&piece) {
+                Ok(_) => (),
+                Err(_) => return false,
+            }
+        } else {
+            match o.pieces.binary_search(&piece) {
+                Ok(_) => (),
+                Err(_) => return false,
+            }
+        }
+
         match self.tiles[i][j] {
             Some((_, x)) => piece > &x,
             _ => true,
@@ -248,6 +263,53 @@ impl Game {
 
     pub fn current_player_kind(&self) -> PlayerKind {
         self.current_player_kind
+    }
+
+    pub fn symmetry_range(&self, axis: Axis) -> Vec<usize> {
+        if self.has_rotational_symmetry() {
+            return (0..2).collect::<Vec<usize>>();
+        } else if self.has_mirror_symmetry(axis) {
+            return (0..2).collect::<Vec<usize>>();
+        }
+
+        (0..3).collect::<Vec<usize>>()
+    }
+
+    pub fn has_mirror_symmetry(&self, axis: Axis) -> bool {
+        match axis {
+            Axis::Horizontal => {
+                if self.tiles[0][0] == self.tiles[2][0]
+                    && self.tiles[0][1] == self.tiles[2][1]
+                    && self.tiles[0][2] == self.tiles[2][2]
+                {
+                    return true;
+                }
+            }
+            Axis::Vertical => {
+                if self.tiles[0][0] == self.tiles[0][2]
+                    && self.tiles[1][0] == self.tiles[1][2]
+                    && self.tiles[2][0] == self.tiles[2][2]
+                {
+                    return true;
+                }
+            }
+        }
+
+        false
+    }
+
+    pub fn has_rotational_symmetry(&self) -> bool {
+        if self.tiles[0][0] == self.tiles[0][2]
+            && self.tiles[0][2] == self.tiles[2][2]
+            && self.tiles[2][2] == self.tiles[2][0]
+            && self.tiles[0][1] == self.tiles[1][0]
+            && self.tiles[1][0] == self.tiles[1][1]
+            && self.tiles[1][1] == self.tiles[0][1]
+        {
+            return true;
+        }
+
+        false
     }
 }
 

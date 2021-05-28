@@ -22,7 +22,10 @@ fn main() {
 
         let (row, col, size) = prompt_move();
 
-        game = game.make_move(row, col, size);
+        match game.clone().make_move(row, col, size) {
+            Ok(x) => game = x,
+            _ => continue,
+        }
     }
 
     print_tiles(game.tiles());

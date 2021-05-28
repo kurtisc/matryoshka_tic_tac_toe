@@ -13,3 +13,4 @@ name = "solver"
 path = "src/solver/main.rs"
 
 [dependencies]
+rayon = "1.5.1"
