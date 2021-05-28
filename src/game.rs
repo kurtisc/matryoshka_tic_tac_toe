@@ -1,14 +1,16 @@
 // Above 4, the solver will take a very long time to run
 const NUMBER_OF_PIECES: usize = 6;
 
+use smallvec::SmallVec;
+
 #[derive(Debug, Clone)]
 pub struct Player {
     pub kind: PlayerKind,
-    pub pieces: Vec<usize>,
+    pub pieces: SmallVec<[usize; NUMBER_OF_PIECES]>,
 }
 
 impl Player {
-    pub fn new(kind: PlayerKind, pieces: Vec<usize>) -> Self {
+    pub fn new(kind: PlayerKind, pieces: SmallVec<[usize; NUMBER_OF_PIECES]>) -> Self {
         Self {
             kind: kind,
             pieces: pieces,
@@ -63,8 +65,14 @@ impl Game {
             tiles: Default::default(),
             winner: None,
             players: (
-                Player::new(PlayerKind::X, (0..NUMBER_OF_PIECES).collect::<Vec<usize>>()),
-                Player::new(PlayerKind::O, (0..NUMBER_OF_PIECES).collect::<Vec<usize>>()),
+                Player::new(
+                    PlayerKind::X,
+                    (0..NUMBER_OF_PIECES).collect::<SmallVec<[usize; NUMBER_OF_PIECES]>>(),
+                ),
+                Player::new(
+                    PlayerKind::O,
+                    (0..NUMBER_OF_PIECES).collect::<SmallVec<[usize; NUMBER_OF_PIECES]>>(),
+                ),
             ),
             current_player_kind: PlayerKind::X,
         }
@@ -75,8 +83,14 @@ impl Game {
             tiles: Default::default(),
             winner: None,
             players: (
-                Player::new(PlayerKind::X, (0..size).collect::<Vec<usize>>()),
-                Player::new(PlayerKind::O, (0..size).collect::<Vec<usize>>()),
+                Player::new(
+                    PlayerKind::X,
+                    (0..size).collect::<SmallVec<[usize; NUMBER_OF_PIECES]>>(),
+                ),
+                Player::new(
+                    PlayerKind::O,
+                    (0..size).collect::<SmallVec<[usize; NUMBER_OF_PIECES]>>(),
+                ),
             ),
             current_player_kind: PlayerKind::X,
         }
