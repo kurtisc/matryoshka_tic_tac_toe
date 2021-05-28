@@ -15,3 +15,4 @@ path = "src/solver/main.rs"
 [dependencies]
 rayon = "1.5.1"
 smallvec = "1.6.1"
+jemallocator-global = "0.3.2"
