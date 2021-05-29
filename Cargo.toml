@@ -17,6 +17,10 @@ path = "src/game/main.rs"
 name = "solver"
 path = "src/solver/main.rs"
 
+[[bin]]
+name = "lookup-generator"
+path = "src/lookup-generator/main.rs"
+
 [dependencies]
 rayon = "1.5.1"
 smallvec = "1.6.1"
