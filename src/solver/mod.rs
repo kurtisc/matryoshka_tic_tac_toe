@@ -1,5 +1,6 @@
 extern crate rayon;
-use crate::game::{Axis, Game, PlayerKind, Winner};
+use crate::game::{Game, PlayerKind, Winner};
+use crate::symmetry::*;
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
@@ -41,7 +42,7 @@ impl Solver {
             Some(s) => self.get_lookup(game, s),
             _ => {
                 let (i, j, k) = game
-                    .symmetry_range(Axis::Horizontal)
+                    .symmetry_range(Symmetry::FlipH)
                     .par_iter()
                     .map(|x| self.min_max_outer_loop(game, *x))
                     .collect::<Vec<BestMove>>()
@@ -58,7 +59,7 @@ impl Solver {
 
     fn min_max_outer_loop(self: &Self, game: &Game, i: usize) -> BestMove {
         *game
-            .symmetry_range(Axis::Vertical)
+            .symmetry_range(Symmetry::FlipV)
             .par_iter()
             .map(|x| self.min_max_inner_loop(game, i, *x))
             .collect::<Vec<BestMove>>()
@@ -172,7 +173,7 @@ impl Solver {
 
     fn min_outer_loop(self: &Self, game: &Game, alpha: i64, beta: i64, i: usize) -> i64 {
         *game
-            .symmetry_range(Axis::Vertical)
+            .symmetry_range(Symmetry::FlipV)
             .par_iter()
             .map(|x| self.min_inner_loop(&game, alpha, beta, i, *x))
             .collect::<Vec<i64>>()
@@ -190,7 +191,7 @@ impl Solver {
         }
 
         *game
-            .symmetry_range(Axis::Horizontal)
+            .symmetry_range(Symmetry::FlipH)
             .par_iter()
             .map(|x| self.min_outer_loop(&game, alpha, beta, *x))
             .collect::<Vec<i64>>()
@@ -249,7 +250,7 @@ impl Solver {
 
     fn max_outer_loop(self: &Self, game: &Game, alpha: i64, beta: i64, i: usize) -> i64 {
         *game
-            .symmetry_range(Axis::Vertical)
+            .symmetry_range(Symmetry::FlipV)
             .par_iter()
             .map(|x| self.max_inner_loop(&game, alpha, beta, i, *x))
             .collect::<Vec<i64>>()
@@ -267,7 +268,7 @@ impl Solver {
         }
 
         *game
-            .symmetry_range(Axis::Horizontal)
+            .symmetry_range(Symmetry::FlipH)
             .par_iter()
             .map(|x| self.max_outer_loop(&game, alpha, beta, *x))
             .collect::<Vec<i64>>()
@@ -277,12 +278,12 @@ impl Solver {
     }
 
     fn check_lookup(self: &Self, game: &Game) -> Option<Symmetry> {
-        let flip_h_game = game.flip_horizontally();
+        let flip_h_game = game.fliptate(&Symmetry::FlipH);
         if self.move_lookup.x.contains_key(&flip_h_game) {
             return Some(Symmetry::FlipH);
         }
 
-        let flip_v_game = game.flip_vertically();
+        let flip_v_game = game.fliptate(&Symmetry::FlipV);
         if self.move_lookup.x.contains_key(&flip_v_game) {
             return Some(Symmetry::FlipV);
         }
@@ -291,17 +292,17 @@ impl Solver {
             return Some(Symmetry::NoSymmetry);
         }
 
-        let rotated_game = game.rotate_by_90();
+        let rotated_game = game.fliptate(&Symmetry::Rotate90);
         if self.move_lookup.x.contains_key(&rotated_game) {
             return Some(Symmetry::Rotate90);
         }
 
-        let rotated_game = game.rotate_by_180();
+        let rotated_game = game.fliptate(&Symmetry::Rotate180);
         if self.move_lookup.x.contains_key(&rotated_game) {
             return Some(Symmetry::Rotate180);
         }
 
-        let rotated_game = game.rotate_by_270();
+        let rotated_game = game.fliptate(&Symmetry::Rotate270);
         if self.move_lookup.x.contains_key(&rotated_game) {
             return Some(Symmetry::Rotate270);
         }
@@ -312,11 +313,21 @@ impl Solver {
     fn get_lookup(self: &Self, game: &Game, symmetry: Symmetry) -> (usize, usize, usize) {
         match symmetry {
             Symmetry::NoSymmetry => self.move_lookup.x[&game],
-            Symmetry::Rotate270 => self.move_lookup.x[&game.clone().rotate_by_90()],
-            Symmetry::Rotate180 => self.move_lookup.x[&game.clone().rotate_by_180()],
-            Symmetry::Rotate90 => self.move_lookup.x[&game.clone().rotate_by_270()],
-            Symmetry::FlipH => self.move_lookup.x[&game.clone().flip_horizontally()],
-            Symmetry::FlipV => self.move_lookup.x[&game.clone().flip_vertically()],
+            Symmetry::Rotate90 => {
+                let (i, j, piece) = self.move_lookup.x[&game.clone().fliptate(&Symmetry::Rotate270)];
+                let (x, y) = fliptate_ij((i, j), &symmetry);
+                (x, y, piece)
+            }
+            Symmetry::Rotate270 => {
+                let (i, j, piece) = self.move_lookup.x[&game.clone().fliptate(&Symmetry::Rotate90)];
+                let (x, y) = fliptate_ij((i, j), &symmetry);
+                (x, y, piece)
+            }
+            _ => {
+                let (i, j, piece) = self.move_lookup.x[&game.clone().fliptate(&symmetry)];
+                let (x, y) = fliptate_ij((i, j), &symmetry);
+                (x, y, piece)
+            }
         }
     }
 

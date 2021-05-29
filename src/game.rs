@@ -38,12 +38,6 @@ pub enum PlayerKind {
 pub type Tile = Option<(PlayerKind, usize)>;
 pub type Tiles = [[Tile; 3]; 3];
 
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum Axis {
-    Horizontal,
-    Vertical,
-}
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Winner {
     X,
@@ -265,114 +259,6 @@ impl Game {
 
     pub fn current_player_kind(&self) -> PlayerKind {
         self.current_player_kind
-    }
-
-    pub fn symmetry_range(&self, axis: Axis) -> Vec<usize> {
-        if self.has_rotational_symmetry() {
-            return (0..2).collect::<Vec<usize>>();
-        } else if self.has_mirror_symmetry(axis) {
-            return (0..2).collect::<Vec<usize>>();
-        }
-
-        (0..3).collect::<Vec<usize>>()
-    }
-
-    pub fn has_mirror_symmetry(&self, axis: Axis) -> bool {
-        match axis {
-            Axis::Horizontal => {
-                if self.tiles[0][0] == self.tiles[2][0]
-                    && self.tiles[0][1] == self.tiles[2][1]
-                    && self.tiles[0][2] == self.tiles[2][2]
-                {
-                    return true;
-                }
-            }
-            Axis::Vertical => {
-                if self.tiles[0][0] == self.tiles[0][2]
-                    && self.tiles[1][0] == self.tiles[1][2]
-                    && self.tiles[2][0] == self.tiles[2][2]
-                {
-                    return true;
-                }
-            }
-        }
-
-        false
-    }
-
-    pub fn has_rotational_symmetry(&self) -> bool {
-        if self.tiles[0][0] == self.tiles[0][2]
-            && self.tiles[0][2] == self.tiles[2][2]
-            && self.tiles[2][2] == self.tiles[2][0]
-            && self.tiles[0][1] == self.tiles[1][0]
-            && self.tiles[1][0] == self.tiles[1][1]
-            && self.tiles[1][1] == self.tiles[0][1]
-        {
-            return true;
-        }
-
-        false
-    }
-
-    pub fn rotate_by_90(self: &Self) -> Self {
-        let mut after = self.clone();
-        after.tiles[0][0] = self.tiles[2][0];
-        after.tiles[0][1] = self.tiles[1][0];
-        after.tiles[0][2] = self.tiles[0][0];
-        after.tiles[1][0] = self.tiles[2][1];
-        after.tiles[1][2] = self.tiles[0][1];
-        after.tiles[2][0] = self.tiles[2][2];
-        after.tiles[2][1] = self.tiles[1][2];
-        after.tiles[2][2] = self.tiles[0][2];
-        after
-    }
-
-    pub fn rotate_by_180(self: &Self) -> Self {
-        let mut after = self.clone();
-        after.tiles[0][0] = self.tiles[2][2];
-        after.tiles[0][1] = self.tiles[2][1];
-        after.tiles[0][2] = self.tiles[2][0];
-        after.tiles[1][0] = self.tiles[1][2];
-        after.tiles[1][2] = self.tiles[1][0];
-        after.tiles[2][0] = self.tiles[0][2];
-        after.tiles[2][1] = self.tiles[0][1];
-        after.tiles[2][2] = self.tiles[0][0];
-        after
-    }
-
-    pub fn rotate_by_270(self: &Self) -> Self {
-        let mut after = self.clone();
-        after.tiles[0][0] = self.tiles[0][2];
-        after.tiles[0][1] = self.tiles[1][2];
-        after.tiles[0][2] = self.tiles[2][2];
-        after.tiles[1][0] = self.tiles[0][1];
-        after.tiles[1][2] = self.tiles[2][1];
-        after.tiles[2][0] = self.tiles[0][0];
-        after.tiles[2][1] = self.tiles[1][0];
-        after.tiles[2][2] = self.tiles[2][0];
-        after
-    }
-
-    pub fn flip_horizontally(self: &Self) -> Self {
-        let mut after = self.clone();
-        after.tiles[0][0] = self.tiles[2][0];
-        after.tiles[0][2] = self.tiles[2][2];
-        after.tiles[0][1] = self.tiles[2][1];
-        after.tiles[2][1] = self.tiles[0][1];
-        after.tiles[2][0] = self.tiles[0][0];
-        after.tiles[2][2] = self.tiles[0][2];
-        after
-    }
-
-    pub fn flip_vertically(self: &Self) -> Self {
-        let mut after = self.clone();
-        after.tiles[0][0] = self.tiles[0][2];
-        after.tiles[0][2] = self.tiles[0][0];
-        after.tiles[1][0] = self.tiles[1][2];
-        after.tiles[1][2] = self.tiles[1][0];
-        after.tiles[2][0] = self.tiles[2][2];
-        after.tiles[2][2] = self.tiles[2][0];
-        after
     }
 }
 
