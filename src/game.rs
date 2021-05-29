@@ -1,4 +1,3 @@
-// Above 4, the solver will take a very long time to run
 const NUMBER_OF_PIECES: usize = 6;
 
 use serde::{Deserialize, Serialize};
