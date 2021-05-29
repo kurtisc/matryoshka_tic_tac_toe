@@ -313,6 +313,67 @@ impl Game {
 
         false
     }
+
+    pub fn rotate_by_90(self: &Self) -> Self {
+        let mut after = self.clone();
+        after.tiles[0][0] = self.tiles[2][0];
+        after.tiles[0][1] = self.tiles[1][0];
+        after.tiles[0][2] = self.tiles[0][0];
+        after.tiles[1][0] = self.tiles[2][1];
+        after.tiles[1][2] = self.tiles[0][1];
+        after.tiles[2][0] = self.tiles[2][2];
+        after.tiles[2][1] = self.tiles[1][2];
+        after.tiles[2][2] = self.tiles[0][2];
+        after
+    }
+
+    pub fn rotate_by_180(self: &Self) -> Self {
+        let mut after = self.clone();
+        after.tiles[0][0] = self.tiles[2][2];
+        after.tiles[0][1] = self.tiles[2][1];
+        after.tiles[0][2] = self.tiles[2][0];
+        after.tiles[1][0] = self.tiles[1][2];
+        after.tiles[1][2] = self.tiles[1][0];
+        after.tiles[2][0] = self.tiles[0][2];
+        after.tiles[2][1] = self.tiles[0][1];
+        after.tiles[2][2] = self.tiles[0][0];
+        after
+    }
+
+    pub fn rotate_by_270(self: &Self) -> Self {
+        let mut after = self.clone();
+        after.tiles[0][0] = self.tiles[0][2];
+        after.tiles[0][1] = self.tiles[1][2];
+        after.tiles[0][2] = self.tiles[2][2];
+        after.tiles[1][0] = self.tiles[0][1];
+        after.tiles[1][2] = self.tiles[2][1];
+        after.tiles[2][0] = self.tiles[0][0];
+        after.tiles[2][1] = self.tiles[1][0];
+        after.tiles[2][2] = self.tiles[2][0];
+        after
+    }
+
+    pub fn flip_horizontally(self: &Self) -> Self {
+        let mut after = self.clone();
+        after.tiles[0][0] = self.tiles[2][0];
+        after.tiles[0][2] = self.tiles[2][2];
+        after.tiles[0][1] = self.tiles[2][1];
+        after.tiles[2][1] = self.tiles[0][1];
+        after.tiles[2][0] = self.tiles[0][0];
+        after.tiles[2][2] = self.tiles[0][2];
+        after
+    }
+
+    pub fn flip_vertically(self: &Self) -> Self {
+        let mut after = self.clone();
+        after.tiles[0][0] = self.tiles[0][2];
+        after.tiles[0][2] = self.tiles[0][0];
+        after.tiles[1][0] = self.tiles[1][2];
+        after.tiles[1][2] = self.tiles[1][0];
+        after.tiles[2][0] = self.tiles[2][2];
+        after.tiles[2][2] = self.tiles[2][0];
+        after
+    }
 }
 
 #[derive(Debug, Clone)]

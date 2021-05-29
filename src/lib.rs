@@ -189,4 +189,17 @@ mod tests {
 
         assert_eq!(game.winner().unwrap(), Winner::O);
     }
+
+    #[test]
+    fn rotations() {
+        let mut game = Game::new();
+        game = game.make_move(0, 0, 2).unwrap();
+        let new_game = game.clone().rotate_by_90();
+        assert_eq!(game, new_game.rotate_by_270());
+
+        let mut game = Game::new();
+        game = game.make_move(0, 0, 2).unwrap();
+        let new_game = game.clone().rotate_by_180();
+        assert_eq!(game, new_game.rotate_by_180());
+    }
 }

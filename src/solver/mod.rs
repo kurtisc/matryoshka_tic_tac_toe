@@ -9,6 +9,15 @@ use std::fs::File;
 use std::io::prelude::*;
 use std::sync::{Arc, Mutex};
 
+enum Symmetry {
+    NoSymmetry,
+    Rotate90,
+    Rotate180,
+    Rotate270,
+    FlipH,
+    FlipV,
+}
+
 #[derive(Clone)]
 pub struct Solver {
     move_lookup: Lookup,
@@ -28,8 +37,8 @@ impl Solver {
     pub fn find_move(self: &Self, game: &Game) -> (usize, usize, usize) {
         let before_state = game.clone();
 
-        match self.move_lookup.x.contains_key(&before_state) {
-            true => self.move_lookup.x[&before_state],
+        match self.check_lookup(&before_state) {
+            Some(s) => self.get_lookup(game, s),
             _ => {
                 let (i, j, k) = game
                     .symmetry_range(Axis::Horizontal)
@@ -265,6 +274,50 @@ impl Solver {
             .par_iter()
             .max()
             .unwrap()
+    }
+
+    fn check_lookup(self: &Self, game: &Game) -> Option<Symmetry> {
+        let flip_h_game = game.flip_horizontally();
+        if self.move_lookup.x.contains_key(&flip_h_game) {
+            return Some(Symmetry::FlipH);
+        }
+
+        let flip_v_game = game.flip_vertically();
+        if self.move_lookup.x.contains_key(&flip_v_game) {
+            return Some(Symmetry::FlipV);
+        }
+
+        if self.move_lookup.x.contains_key(&game) {
+            return Some(Symmetry::NoSymmetry);
+        }
+
+        let rotated_game = game.rotate_by_90();
+        if self.move_lookup.x.contains_key(&rotated_game) {
+            return Some(Symmetry::Rotate90);
+        }
+
+        let rotated_game = game.rotate_by_180();
+        if self.move_lookup.x.contains_key(&rotated_game) {
+            return Some(Symmetry::Rotate180);
+        }
+
+        let rotated_game = game.rotate_by_270();
+        if self.move_lookup.x.contains_key(&rotated_game) {
+            return Some(Symmetry::Rotate270);
+        }
+
+        None
+    }
+
+    fn get_lookup(self: &Self, game: &Game, symmetry: Symmetry) -> (usize, usize, usize) {
+        match symmetry {
+            Symmetry::NoSymmetry => self.move_lookup.x[&game],
+            Symmetry::Rotate270 => self.move_lookup.x[&game.clone().rotate_by_90()],
+            Symmetry::Rotate180 => self.move_lookup.x[&game.clone().rotate_by_180()],
+            Symmetry::Rotate90 => self.move_lookup.x[&game.clone().rotate_by_270()],
+            Symmetry::FlipH => self.move_lookup.x[&game.clone().flip_horizontally()],
+            Symmetry::FlipV => self.move_lookup.x[&game.clone().flip_vertically()],
+        }
     }
 
     fn add_to_lookup(self: &Self, game: &Game, ideal_move: (usize, usize, usize)) {
