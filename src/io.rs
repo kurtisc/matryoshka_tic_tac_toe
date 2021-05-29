@@ -72,30 +72,26 @@ pub fn print_tiles(tiles: &Tiles) {
     }
     println!();
 
-    for (i, row) in tiles.iter().enumerate() {
+    for (i, tile) in tiles.data().iter().enumerate() {
         print!(" {}", i + 1);
-        for tile in row {
-            print!(
-                " {}",
-                match tile {
-                    Some((PlayerKind::X, _)) => "x",
-                    Some((PlayerKind::O, _)) => "o",
-                    _ => "_",
-                }
-            );
-        }
+        print!(
+            " {}",
+            match tile {
+                Some((PlayerKind::X, _)) => "x",
+                Some((PlayerKind::O, _)) => "o",
+                _ => "_",
+            }
+        );
 
         print!("    ");
 
-        for tile in row {
-            print!(
-                " {}",
-                match tile {
-                    Some((_, x)) => x.to_string(),
-                    _ => "_".to_string(),
-                }
-            );
-        }
+        print!(
+            " {}",
+            match tile {
+                Some((_, x)) => x.to_string(),
+                _ => "_".to_string(),
+            }
+        );
         println!();
     }
 

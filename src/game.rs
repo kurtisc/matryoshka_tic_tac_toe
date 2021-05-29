@@ -1,6 +1,7 @@
 const NUMBER_OF_PIECES: usize = 6;
 
 use serde::{Deserialize, Serialize};
+use std::ops::{Index, IndexMut};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Player {
@@ -35,7 +36,30 @@ pub enum PlayerKind {
 }
 
 pub type Tile = Option<(PlayerKind, usize)>;
-pub type Tiles = [[Tile; 3]; 3];
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub struct Tiles {
+    data: [Tile; 9],
+}
+
+impl Index<usize> for Tiles {
+    type Output = [Tile];
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.data[index * 3..(index + 1) * 3]
+    }
+}
+
+impl IndexMut<usize> for Tiles {
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        &mut self.data[index * 3..(index + 1) * 3]
+    }
+}
+
+impl Tiles {
+    pub fn data(&self) -> [Tile; 9] {
+        self.data
+    }
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Winner {
@@ -55,7 +79,7 @@ pub struct Game {
 impl Game {
     pub fn new() -> Self {
         Self {
-            tiles: Default::default(),
+            tiles: Tiles { data: [None; 9] },
             winner: None,
             players: (
                 Player::new(PlayerKind::X, (0..NUMBER_OF_PIECES).collect::<Vec<usize>>()),
@@ -67,7 +91,7 @@ impl Game {
 
     pub fn new_with_size(size: usize) -> Self {
         Self {
-            tiles: Default::default(),
+            tiles: Tiles { data: [None; 9] },
             winner: None,
             players: (
                 Player::new(PlayerKind::X, (0..size).collect::<Vec<usize>>()),
@@ -111,9 +135,9 @@ impl Game {
     }
 
     fn update_winner(&mut self, row: usize, col: usize) {
-        let rows = self.tiles.len();
+        let rows = 3;
 
-        let tiles_row = self.tiles[row];
+        let tiles_row = &self.tiles[row];
 
         let tiles_col = [self.tiles[0][col], self.tiles[1][col], self.tiles[2][col]];
 
@@ -176,11 +200,7 @@ impl Game {
         });
 
         self.winner = self.winner.or_else(|| {
-            if self
-                .tiles
-                .iter()
-                .all(|row| row.iter().all(|tile| tile.is_some()))
-            {
+            if self.tiles.data.iter().all(|tile| tile.is_some()) {
                 self.check_cappable()
             } else {
                 None
@@ -228,17 +248,15 @@ impl Game {
     }
 
     pub fn piece_can_be_placed(&self, piece: &usize) -> bool {
-        for (_, row) in self.tiles.iter().enumerate() {
-            for tile in row {
-                match tile {
-                    Some(other_piece) => {
-                        let (_, other_size) = other_piece;
-                        if other_size < piece {
-                            return true;
-                        }
+        for tile in self.tiles.data().iter() {
+            match tile {
+                Some(other_piece) => {
+                    let (_, other_size) = other_piece;
+                    if other_size < piece {
+                        return true;
                     }
-                    _ => (),
                 }
+                _ => (),
             }
         }
         false
