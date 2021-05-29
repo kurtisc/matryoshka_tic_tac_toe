@@ -4,6 +4,7 @@ pub mod solver;
 
 #[cfg(test)]
 mod tests {
+    use crate::game::{Game, PlayerKind, Winner};
     use crate::solver::Solver;
 
     #[test]
@@ -175,5 +176,28 @@ mod tests {
         game = game.make_move(i, j, k).unwrap();
 
         assert!(game.tiles[1][1] != None);
+    }
+
+    #[test]
+    fn ai_plays_itself_o_wins() {
+        // A small game
+        let mut game = Game::new_with_size(3);
+        let mut solver_x = Solver::new();
+        let mut solver_o = Solver::new();
+        solver_x.kind = PlayerKind::X;
+
+        while !game.is_finished() {
+            let (x, b) = solver_x.find_move(&game);
+            let (i, j, k) = b;
+            solver_x = x;
+            game = game.make_move(i, j, k).unwrap();
+
+            let (o, b) = solver_o.find_move(&game);
+            let (i, j, k) = b;
+            solver_o = o;
+            game = game.make_move(i, j, k).unwrap();
+        }
+
+        assert_eq!(game.winner().unwrap(), Winner::O);
     }
 }
