@@ -4,8 +4,7 @@ pub mod solver;
 
 #[cfg(test)]
 mod tests {
-    use crate::game::{Game, Winner};
-    use crate::solver::get_min_max_move;
+    use crate::solver::Solver;
 
     #[test]
     fn col_3_o_wins() {
@@ -121,43 +120,60 @@ mod tests {
     #[test]
     fn ai_wins_game() {
         let mut game = Game::new_with_size(3);
+        let solver = Solver::new();
+
         game = game.make_move(0, 0, 2).unwrap();
         game = game.make_move(2, 2, 2).unwrap();
         game = game.make_move(2, 1, 1).unwrap();
         game = game.make_move(1, 2, 1).unwrap();
         game = game.make_move(0, 1, 0).unwrap();
-        let (i, j, k) = get_min_max_move(&game);
+
+        let (_, b) = solver.find_move(&game);
+        let (i, j, k) = b;
         game = game.make_move(i, j, k).unwrap();
+
         assert_eq!(game.winner().unwrap(), Winner::O);
     }
 
     #[test]
     fn ai_avoids_loss() {
         let mut game = Game::new_with_size(3);
+        let mut solver = Solver::new();
+
         game = game.make_move(2, 1, 0).unwrap();
 
-        let (i, j, k) = get_min_max_move(&game);
+        let (a, b) = solver.find_move(&game);
+        solver = a;
+        let (i, j, k) = b;
         game = game.make_move(i, j, k).unwrap();
 
         game = game.make_move(2, 0, 1).unwrap();
 
-        let (i, j, k) = get_min_max_move(&game);
+        let (a, b) = solver.find_move(&game);
+        solver = a;
+        let (i, j, k) = b;
         game = game.make_move(i, j, k).unwrap();
 
         game = game.make_move(2, 2, 2).unwrap();
 
-        let (i, j, k) = get_min_max_move(&game);
+        let (_, b) = solver.find_move(&game);
+        let (i, j, k) = b;
         game = game.make_move(i, j, k).unwrap();
+
         assert_eq!(game.winner().unwrap(), Winner::O);
     }
 
     #[test]
     fn ai_ideal_first_move() {
         let mut game = Game::new_with_size(3);
+        let solver = Solver::new();
+
         game = game.make_move(2, 1, 0).unwrap();
 
-        let (i, j, k) = get_min_max_move(&game);
+        let (_, b) = solver.find_move(&game);
+        let (i, j, k) = b;
         game = game.make_move(i, j, k).unwrap();
+
         assert!(game.tiles[1][1] != None);
     }
 }

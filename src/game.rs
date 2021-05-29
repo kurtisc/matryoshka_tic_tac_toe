@@ -1,16 +1,16 @@
 // Above 4, the solver will take a very long time to run
 const NUMBER_OF_PIECES: usize = 6;
 
-use smallvec::SmallVec;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Player {
     pub kind: PlayerKind,
-    pub pieces: SmallVec<[usize; NUMBER_OF_PIECES]>,
+    pub pieces: Vec<usize>,
 }
 
 impl Player {
-    pub fn new(kind: PlayerKind, pieces: SmallVec<[usize; NUMBER_OF_PIECES]>) -> Self {
+    pub fn new(kind: PlayerKind, pieces: Vec<usize>) -> Self {
         Self {
             kind: kind,
             pieces: pieces,
@@ -29,7 +29,7 @@ impl Player {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum PlayerKind {
     X,
     O,
@@ -44,14 +44,14 @@ pub enum Axis {
     Vertical,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Winner {
     X,
     O,
     Tie,
 }
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq, Eq, Hash, Debug, Serialize, Deserialize)]
 pub struct Game {
     pub tiles: Tiles,
     winner: Option<Winner>,
@@ -65,14 +65,8 @@ impl Game {
             tiles: Default::default(),
             winner: None,
             players: (
-                Player::new(
-                    PlayerKind::X,
-                    (0..NUMBER_OF_PIECES).collect::<SmallVec<[usize; NUMBER_OF_PIECES]>>(),
-                ),
-                Player::new(
-                    PlayerKind::O,
-                    (0..NUMBER_OF_PIECES).collect::<SmallVec<[usize; NUMBER_OF_PIECES]>>(),
-                ),
+                Player::new(PlayerKind::X, (0..NUMBER_OF_PIECES).collect::<Vec<usize>>()),
+                Player::new(PlayerKind::O, (0..NUMBER_OF_PIECES).collect::<Vec<usize>>()),
             ),
             current_player_kind: PlayerKind::X,
         }
@@ -83,14 +77,8 @@ impl Game {
             tiles: Default::default(),
             winner: None,
             players: (
-                Player::new(
-                    PlayerKind::X,
-                    (0..size).collect::<SmallVec<[usize; NUMBER_OF_PIECES]>>(),
-                ),
-                Player::new(
-                    PlayerKind::O,
-                    (0..size).collect::<SmallVec<[usize; NUMBER_OF_PIECES]>>(),
-                ),
+                Player::new(PlayerKind::X, (0..size).collect::<Vec<usize>>()),
+                Player::new(PlayerKind::O, (0..size).collect::<Vec<usize>>()),
             ),
             current_player_kind: PlayerKind::X,
         }

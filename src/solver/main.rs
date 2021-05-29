@@ -3,10 +3,11 @@ const SOLVER_NUMBER_OF_PIECES: usize = 5;
 
 use matryoshka_tic_tac_toe::game::{Game, PlayerKind, Winner};
 use matryoshka_tic_tac_toe::io::{print_tiles, prompt_move};
-use matryoshka_tic_tac_toe::solver::get_min_max_move;
+use matryoshka_tic_tac_toe::solver::Solver;
 
 fn main() {
     let mut game = Game::new_with_size(SOLVER_NUMBER_OF_PIECES);
+    let mut solver = Solver::new();
 
     while !game.is_finished() {
         print_tiles(game.tiles());
@@ -24,7 +25,12 @@ fn main() {
 
         let (row, col, size) = match game.current_player_kind() {
             PlayerKind::X => prompt_move(),
-            PlayerKind::O => get_min_max_move(&game),
+            PlayerKind::O => {
+                let (a, b) = solver.find_move(&game);
+                solver = a;
+                let (i, j, k) = b;
+                (i, j, k)
+            }
         };
 
         match game.clone().make_move(row, col, size) {
