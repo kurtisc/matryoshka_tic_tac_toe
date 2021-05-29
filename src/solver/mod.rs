@@ -3,14 +3,16 @@ use crate::game::{Axis, Game, PlayerKind, Winner};
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
-use std::cmp::Ordering;
+use std::cmp::{max, min, Ordering};
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::prelude::*;
+use std::sync::{Arc, Mutex};
 
 #[derive(Clone)]
 pub struct Solver {
     move_lookup: Lookup,
+    write_lookup: Arc<Mutex<Lookup>>,
     pub kind: PlayerKind,
 }
 
@@ -18,15 +20,16 @@ impl Solver {
     pub fn new() -> Self {
         Self {
             move_lookup: Lookup::new(),
+            write_lookup: Arc::new(Mutex::new(Lookup::new())),
             kind: PlayerKind::O,
         }
     }
 
-    pub fn find_move(mut self: Self, game: &Game) -> (Self, (usize, usize, usize)) {
+    pub fn find_move(self: &Self, game: &Game) -> (usize, usize, usize) {
         let before_state = game.clone();
 
         match self.move_lookup.x.contains_key(&before_state) {
-            true => (self.clone(), self.move_lookup.x[&before_state]),
+            true => self.move_lookup.x[&before_state],
             _ => {
                 let (i, j, k) = game
                     .symmetry_range(Axis::Horizontal)
@@ -38,8 +41,8 @@ impl Solver {
                     .unwrap()
                     .b_move;
 
-                self = self.add_to_lookup(&before_state, (i, j, k));
-                (self, (i, j, k))
+                self.add_to_lookup(&game, (i, j, k));
+                (i, j, k)
             }
         }
     }
@@ -111,6 +114,13 @@ impl Solver {
         j: usize,
         piece: usize,
     ) -> i64 {
+        match game.winner() {
+            Some(Winner::X) => return -10,
+            Some(Winner::O) => return 10,
+            Some(Winner::Tie) => return 0,
+            _ => (),
+        }
+
         if game.piece_can_be_placed_at(&piece, i, j) {
             let new_game = game.clone().make_move(i, j, piece);
 
@@ -118,9 +128,7 @@ impl Solver {
                 Ok(x) => {
                     let score = self.max_search(&x, alpha, beta);
 
-                    if score < beta {
-                        beta = score;
-                    }
+                    beta = min(score, beta);
                     if alpha > beta {
                         return beta;
                     }
@@ -132,13 +140,6 @@ impl Solver {
     }
 
     fn min_inner_loop(self: &Self, game: &Game, alpha: i64, beta: i64, i: usize, j: usize) -> i64 {
-        match game.winner() {
-            Some(Winner::X) => return -10,
-            Some(Winner::O) => return 10,
-            Some(Winner::Tie) => return 0,
-            _ => (),
-        }
-
         let their = match self.kind {
             PlayerKind::O => {
                 let (x, _) = game.players.clone();
@@ -161,13 +162,6 @@ impl Solver {
     }
 
     fn min_outer_loop(self: &Self, game: &Game, alpha: i64, beta: i64, i: usize) -> i64 {
-        match game.winner() {
-            Some(Winner::X) => return -10,
-            Some(Winner::O) => return 10,
-            Some(Winner::Tie) => return 0,
-            _ => (),
-        }
-
         *game
             .symmetry_range(Axis::Vertical)
             .par_iter()
@@ -205,13 +199,6 @@ impl Solver {
         j: usize,
         piece: usize,
     ) -> i64 {
-        match game.winner() {
-            Some(Winner::X) => return -10,
-            Some(Winner::O) => return 10,
-            Some(Winner::Tie) => return 0,
-            _ => (),
-        }
-
         if game.piece_can_be_placed_at(&piece, i, j) {
             let new_game = game.clone().make_move(i, j, piece);
 
@@ -219,9 +206,7 @@ impl Solver {
                 Ok(x) => {
                     let score = self.min_search(&x, alpha, beta);
 
-                    if score > alpha {
-                        alpha = score;
-                    }
+                    alpha = max(score, alpha);
                     if alpha > beta {
                         return alpha;
                     }
@@ -233,13 +218,6 @@ impl Solver {
     }
 
     fn max_inner_loop(self: &Self, game: &Game, alpha: i64, beta: i64, i: usize, j: usize) -> i64 {
-        match game.winner() {
-            Some(Winner::X) => return -10,
-            Some(Winner::O) => return 10,
-            Some(Winner::Tie) => return 0,
-            _ => (),
-        }
-
         let my = match self.kind {
             PlayerKind::O => {
                 let (_, o) = game.players.clone();
@@ -261,13 +239,6 @@ impl Solver {
     }
 
     fn max_outer_loop(self: &Self, game: &Game, alpha: i64, beta: i64, i: usize) -> i64 {
-        match game.winner() {
-            Some(Winner::X) => return -10,
-            Some(Winner::O) => return 10,
-            Some(Winner::Tie) => return 0,
-            _ => (),
-        }
-
         *game
             .symmetry_range(Axis::Vertical)
             .par_iter()
@@ -296,14 +267,10 @@ impl Solver {
             .unwrap()
     }
 
-    fn add_to_lookup(mut self: Self, game: &Game, ideal_move: (usize, usize, usize)) -> Self {
-        self.move_lookup.x.insert(game.clone(), ideal_move);
-        self.clone().write_lookup();
-        self
-    }
-
-    fn write_lookup(self: Self) -> () {
-        self.move_lookup.write_lookup()
+    fn add_to_lookup(self: &Self, game: &Game, ideal_move: (usize, usize, usize)) {
+        let mut shared_lookup = self.write_lookup.lock().unwrap();
+        shared_lookup.x.insert(game.clone(), ideal_move);
+        shared_lookup.write_lookup()
     }
 }
 

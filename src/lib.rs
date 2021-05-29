@@ -129,8 +129,7 @@ mod tests {
         game = game.make_move(1, 2, 1).unwrap();
         game = game.make_move(0, 1, 0).unwrap();
 
-        let (_, b) = solver.find_move(&game);
-        let (i, j, k) = b;
+        let (i, j, k) = solver.find_move(&game);
         game = game.make_move(i, j, k).unwrap();
 
         assert_eq!(game.winner().unwrap(), Winner::O);
@@ -139,26 +138,21 @@ mod tests {
     #[test]
     fn ai_avoids_loss() {
         let mut game = Game::new_with_size(3);
-        let mut solver = Solver::new();
+        let solver = Solver::new();
 
         game = game.make_move(2, 1, 0).unwrap();
 
-        let (a, b) = solver.find_move(&game);
-        solver = a;
-        let (i, j, k) = b;
+        let (i, j, k) = solver.find_move(&game);
         game = game.make_move(i, j, k).unwrap();
 
         game = game.make_move(2, 0, 1).unwrap();
 
-        let (a, b) = solver.find_move(&game);
-        solver = a;
-        let (i, j, k) = b;
+        let (i, j, k) = solver.find_move(&game);
         game = game.make_move(i, j, k).unwrap();
 
         game = game.make_move(2, 2, 2).unwrap();
 
-        let (_, b) = solver.find_move(&game);
-        let (i, j, k) = b;
+        let (i, j, k) = solver.find_move(&game);
         game = game.make_move(i, j, k).unwrap();
 
         assert_eq!(game.winner().unwrap(), Winner::O);
@@ -171,8 +165,7 @@ mod tests {
 
         game = game.make_move(2, 1, 0).unwrap();
 
-        let (_, b) = solver.find_move(&game);
-        let (i, j, k) = b;
+        let (i, j, k) = solver.find_move(&game);
         game = game.make_move(i, j, k).unwrap();
 
         assert!(game.tiles[1][1] != None);
@@ -183,18 +176,14 @@ mod tests {
         // A small game
         let mut game = Game::new_with_size(3);
         let mut solver_x = Solver::new();
-        let mut solver_o = Solver::new();
+        let solver_o = Solver::new();
         solver_x.kind = PlayerKind::X;
 
         while !game.is_finished() {
-            let (x, b) = solver_x.find_move(&game);
-            let (i, j, k) = b;
-            solver_x = x;
+            let (i, j, k) = solver_x.find_move(&game);
             game = game.make_move(i, j, k).unwrap();
 
-            let (o, b) = solver_o.find_move(&game);
-            let (i, j, k) = b;
-            solver_o = o;
+            let (i, j, k) = solver_o.find_move(&game);
             game = game.make_move(i, j, k).unwrap();
         }
 
