@@ -1,5 +1,5 @@
 // Above 4, the solver will take a very long time to run
-const SOLVER_NUMBER_OF_PIECES: usize = 5;
+const SOLVER_NUMBER_OF_PIECES: usize = 4;
 
 use matryoshka_tic_tac_toe::game::{Game, PlayerKind, Winner};
 use matryoshka_tic_tac_toe::io::{print_tiles, prompt_move};
