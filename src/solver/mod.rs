@@ -323,7 +323,7 @@ impl Solver {
     fn add_to_lookup(self: &Self, game: &Game, ideal_move: (usize, usize, usize)) {
         let mut shared_lookup = self.write_lookup.lock().unwrap();
         shared_lookup.x.insert(game.clone(), ideal_move);
-        shared_lookup.write_lookup()
+        shared_lookup.write()
     }
 }
 
@@ -335,10 +335,11 @@ struct Lookup {
 }
 
 impl Lookup {
-    fn write_lookup(self: &Self) {
-        let mut f = File::create("data/new_lookup.json").unwrap();
+    fn write(self: &Self) {
+        let mut f = File::create("data/lookup.json").unwrap();
         f.write_all(&serde_json::to_string(self).unwrap().into_bytes())
             .unwrap();
+        f.sync_all().unwrap();
     }
 
     fn new() -> Self {
