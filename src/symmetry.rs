@@ -1,12 +1,15 @@
 use crate::game::{Game, Tile};
+use strum_macros::EnumIter;
 
+// These are ordered so they're most efficient when iterated through
+#[derive(EnumIter)]
 pub enum Symmetry {
-    NoSymmetry,
+    FlipH,
+    FlipV,
     Rotate90,
     Rotate180,
     Rotate270,
-    FlipH,
-    FlipV,
+    NoSymmetry,
 }
 
 impl Game {
@@ -24,22 +27,22 @@ impl Game {
         match symmetry {
             Symmetry::FlipH => {
                 self.tiles[0][0] == self.tiles[2][0]
-                && self.tiles[0][1] == self.tiles[2][1]
-                && self.tiles[0][2] == self.tiles[2][2]
+                    && self.tiles[0][1] == self.tiles[2][1]
+                    && self.tiles[0][2] == self.tiles[2][2]
             }
             Symmetry::FlipV => {
                 self.tiles[0][0] == self.tiles[0][2]
-                && self.tiles[1][0] == self.tiles[1][2]
-                && self.tiles[2][0] == self.tiles[2][2]
+                    && self.tiles[1][0] == self.tiles[1][2]
+                    && self.tiles[2][0] == self.tiles[2][2]
             }
             _ => false,
         }
     }
 
     pub fn has_rotational_symmetry(&self) -> bool {
-        self.tiles == self.fliptate(&Symmetry::Rotate90).tiles &&
-        self.tiles == self.fliptate(&Symmetry::Rotate180).tiles &&
-        self.tiles == self.fliptate(&Symmetry::Rotate270).tiles
+        self.tiles == self.fliptate(&Symmetry::Rotate90).tiles
+            && self.tiles == self.fliptate(&Symmetry::Rotate180).tiles
+            && self.tiles == self.fliptate(&Symmetry::Rotate270).tiles
     }
 
     fn fliptate_helper(self: &Self, f: fn((usize, usize)) -> (usize, usize), i: usize) -> Tile {
@@ -58,9 +61,11 @@ impl Game {
         };
 
         let mut after = self.clone();
-        let flipped = (0..9).collect::<Vec<usize>>().iter().map(|i|
-            self.fliptate_helper(f, *i)
-        ).collect::<Vec<Tile>>();
+        let flipped = (0..9)
+            .collect::<Vec<usize>>()
+            .iter()
+            .map(|i| self.fliptate_helper(f, *i))
+            .collect::<Vec<Tile>>();
 
         for (i, tile) in flipped.iter().enumerate() {
             let (x, y) = index_to_coordinates(i);

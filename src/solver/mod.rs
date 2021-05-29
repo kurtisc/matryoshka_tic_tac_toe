@@ -9,20 +9,12 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io::prelude::*;
 use std::sync::{Arc, Mutex};
-
-enum Symmetry {
-    NoSymmetry,
-    Rotate90,
-    Rotate180,
-    Rotate270,
-    FlipH,
-    FlipV,
-}
+use strum::IntoEnumIterator;
 
 #[derive(Clone)]
 pub struct Solver {
     move_lookup: Lookup,
-    write_lookup: Arc<Mutex<Lookup>>,
+    write_lookup: Option<Arc<Mutex<Lookup>>>,
     pub kind: PlayerKind,
 }
 
@@ -30,7 +22,15 @@ impl Solver {
     pub fn new() -> Self {
         Self {
             move_lookup: Lookup::new(),
-            write_lookup: Arc::new(Mutex::new(Lookup::new())),
+            write_lookup: None,
+            kind: PlayerKind::O,
+        }
+    }
+
+    pub fn new_overwrite_lookup() -> Self {
+        Self {
+            move_lookup: Lookup::new(),
+            write_lookup: Some(Arc::new(Mutex::new(Lookup::new()))),
             kind: PlayerKind::O,
         }
     }
@@ -39,7 +39,7 @@ impl Solver {
         let before_state = game.clone();
 
         match self.check_lookup(&before_state) {
-            Some(s) => self.get_lookup(game, s),
+            Some(ijk) => ijk,
             _ => {
                 let (i, j, k) = game
                     .symmetry_range(Symmetry::FlipH)
@@ -277,64 +277,34 @@ impl Solver {
             .unwrap()
     }
 
-    fn check_lookup(self: &Self, game: &Game) -> Option<Symmetry> {
-        let flip_h_game = game.fliptate(&Symmetry::FlipH);
-        if self.move_lookup.x.contains_key(&flip_h_game) {
-            return Some(Symmetry::FlipH);
-        }
-
-        let flip_v_game = game.fliptate(&Symmetry::FlipV);
-        if self.move_lookup.x.contains_key(&flip_v_game) {
-            return Some(Symmetry::FlipV);
-        }
-
+    fn check_lookup(self: &Self, game: &Game) -> Option<(usize, usize, usize)> {
         if self.move_lookup.x.contains_key(&game) {
-            return Some(Symmetry::NoSymmetry);
+            return Some(self.move_lookup.x[&game]);
         }
-
-        let rotated_game = game.fliptate(&Symmetry::Rotate90);
-        if self.move_lookup.x.contains_key(&rotated_game) {
-            return Some(Symmetry::Rotate90);
-        }
-
-        let rotated_game = game.fliptate(&Symmetry::Rotate180);
-        if self.move_lookup.x.contains_key(&rotated_game) {
-            return Some(Symmetry::Rotate180);
-        }
-
-        let rotated_game = game.fliptate(&Symmetry::Rotate270);
-        if self.move_lookup.x.contains_key(&rotated_game) {
-            return Some(Symmetry::Rotate270);
+        for symmetry in Symmetry::iter() {
+            let symmetry_game = &game.clone().fliptate(&symmetry);
+            match self.move_lookup.x.get(symmetry_game) {
+                Some(ijk) => {
+                    let (i, j, k) = ijk;
+                    let (x, y) = fliptate_ij((*i, *j), &symmetry);
+                    return Some((x, y, *k));
+                }
+                _ => (),
+            }
         }
 
         None
     }
 
-    fn get_lookup(self: &Self, game: &Game, symmetry: Symmetry) -> (usize, usize, usize) {
-        match symmetry {
-            Symmetry::NoSymmetry => self.move_lookup.x[&game],
-            Symmetry::Rotate90 => {
-                let (i, j, piece) = self.move_lookup.x[&game.clone().fliptate(&Symmetry::Rotate270)];
-                let (x, y) = fliptate_ij((i, j), &symmetry);
-                (x, y, piece)
-            }
-            Symmetry::Rotate270 => {
-                let (i, j, piece) = self.move_lookup.x[&game.clone().fliptate(&Symmetry::Rotate90)];
-                let (x, y) = fliptate_ij((i, j), &symmetry);
-                (x, y, piece)
-            }
-            _ => {
-                let (i, j, piece) = self.move_lookup.x[&game.clone().fliptate(&symmetry)];
-                let (x, y) = fliptate_ij((i, j), &symmetry);
-                (x, y, piece)
-            }
-        }
-    }
-
     fn add_to_lookup(self: &Self, game: &Game, ideal_move: (usize, usize, usize)) {
-        let mut shared_lookup = self.write_lookup.lock().unwrap();
-        shared_lookup.x.insert(game.clone(), ideal_move);
-        shared_lookup.write()
+        match &self.write_lookup {
+            Some(l) => {
+                let mut shared_lookup = l.lock().unwrap();
+                shared_lookup.x.insert(game.clone(), ideal_move);
+                shared_lookup.write()
+            }
+            _ => (),
+        };
     }
 }
 

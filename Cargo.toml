@@ -28,3 +28,5 @@ jemallocator-global = "0.3.2"
 serde = { version = "1.0.126", features = ["derive"]}
 serde_json = "1.0.64"
 serde_with = "1.9.1"
+strum = "0.20.0"
+strum_macros = "0.20"

@@ -6,7 +6,7 @@ use std::io::prelude::*;
 use std::time::SystemTime;
 
 fn main() {
-    let solver = Solver::new();
+    let solver = Solver::new_overwrite_lookup();
     let mut progress = Progress::new();
     let mut resumed = false;
 

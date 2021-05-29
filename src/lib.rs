@@ -178,9 +178,9 @@ mod tests {
         game = game.make_move(2, 0, 3).unwrap(); // o
         game = game.make_move(0, 2, 3).unwrap(); // o
         assert_eq!(game.winner(), None);
-        assert_eq!(game.has_mirror_symmetry(Symmetry::FlipH),false);
-        assert_eq!(game.has_mirror_symmetry(Symmetry::FlipV),false);
-        assert_eq!(game.has_rotational_symmetry(),false);
+        assert_eq!(game.has_mirror_symmetry(Symmetry::FlipH), false);
+        assert_eq!(game.has_mirror_symmetry(Symmetry::FlipV), false);
+        assert_eq!(game.has_rotational_symmetry(), false);
 
         // x x o    3 1 0
         // o _ x    2 _ 0
