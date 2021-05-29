@@ -1,16 +1,52 @@
+extern crate getopts;
+use getopts::Options;
 use matryoshka_tic_tac_toe::game::Game;
 use matryoshka_tic_tac_toe::solver::Solver;
 use serde::{Deserialize, Serialize};
+use std::env;
 use std::fs::File;
 use std::io::prelude::*;
 use std::time::SystemTime;
+
+fn print_usage(program: &str, opts: Options) {
+    let brief = format!("Usage: {} FILE [options]", program);
+    println!("{}", opts.usage(&brief));
+}
 
 fn main() {
     let solver = Solver::new_overwrite_lookup();
     let mut progress = Progress::new();
     let mut resumed = false;
+    let mut until: usize = 7;
 
-    for mut number_of_pieces in 3..6 {
+    let args: Vec<String> = env::args().collect();
+    let program = args[0].clone();
+
+    let mut opts = Options::new();
+    opts.optopt(
+        "u",
+        "until",
+        "Run the generator until this many pieces have been solved",
+        "PIECES",
+    );
+    opts.optflag("h", "help", "print this help menu");
+    match opts.parse(&args[1..]) {
+        Ok(m) => {
+            if m.opt_present("h") {
+                print_usage(&program, opts);
+                return;
+            }
+            if m.opt_present("u") {
+                match m.opt_get::<usize>("u") {
+                    Ok(Some(u)) => until = u,
+                    _ => (),
+                }
+            }
+        }
+        _ => (),
+    };
+
+    for mut number_of_pieces in 3..until + 1 {
         for mut row in 0..3 {
             for mut col in 0..3 {
                 for mut piece in 0..number_of_pieces {
