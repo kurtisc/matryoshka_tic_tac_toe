@@ -72,7 +72,7 @@ pub fn print_tiles(tiles: &Tiles) {
     }
     println!();
 
-    for (i, tile) in tiles.data().iter().enumerate() {
+    for (i, tile) in tiles.data.iter().enumerate() {
         print!(" {}", i + 1);
         print!(
             " {}",

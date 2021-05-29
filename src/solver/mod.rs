@@ -45,8 +45,6 @@ impl Solver {
                     .symmetry_range(Symmetry::FlipH)
                     .par_iter()
                     .map(|x| self.min_max_outer_loop(game, *x))
-                    .collect::<Vec<BestMove>>()
-                    .par_iter()
                     .max()
                     .unwrap()
                     .b_move;
@@ -58,12 +56,9 @@ impl Solver {
     }
 
     fn min_max_outer_loop(self: &Self, game: &Game, i: usize) -> BestMove {
-        *game
-            .symmetry_range(Symmetry::FlipV)
+        game.symmetry_range(Symmetry::FlipV)
             .par_iter()
             .map(|x| self.min_max_inner_loop(game, i, *x))
-            .collect::<Vec<BestMove>>()
-            .par_iter()
             .max()
             .unwrap()
     }
@@ -80,17 +75,15 @@ impl Solver {
             }
         };
 
-        *my.pieces
+        my.pieces
             .par_iter()
             .map(|y| self.min_max_loop(game, i, j, *y))
-            .collect::<Vec<BestMove>>()
-            .par_iter()
             .max()
             .unwrap()
     }
 
     fn min_max_loop(self: &Self, game: &Game, i: usize, j: usize, piece: usize) -> BestMove {
-        let mut best_score = std::i64::MIN;
+        let mut best_score = std::i8::MIN;
         let mut best_move = (0, 0, 0);
 
         if game.piece_can_be_placed_at(&piece, i, j) {
@@ -98,7 +91,7 @@ impl Solver {
 
             match new_game {
                 Ok(x) => {
-                    let tmp_score = self.min_search(&x, std::i64::MIN, std::i64::MAX);
+                    let tmp_score = self.min_search(&x, std::i8::MIN, std::i8::MAX);
 
                     if tmp_score > best_score {
                         best_score = tmp_score;
@@ -118,12 +111,12 @@ impl Solver {
     fn min_loop(
         self: &Self,
         game: &Game,
-        alpha: i64,
-        mut beta: i64,
+        alpha: i8,
+        mut beta: i8,
         i: usize,
         j: usize,
         piece: usize,
-    ) -> i64 {
+    ) -> i8 {
         match game.winner() {
             Some(Winner::X) => return -10,
             Some(Winner::O) => return 10,
@@ -149,7 +142,7 @@ impl Solver {
         beta
     }
 
-    fn min_inner_loop(self: &Self, game: &Game, alpha: i64, beta: i64, i: usize, j: usize) -> i64 {
+    fn min_inner_loop(self: &Self, game: &Game, alpha: i8, beta: i8, i: usize, j: usize) -> i8 {
         let their = match self.kind {
             PlayerKind::O => {
                 let (x, _) = game.players.clone();
@@ -161,28 +154,23 @@ impl Solver {
             }
         };
 
-        *their
+        their
             .pieces
             .par_iter()
             .map(|x| self.min_loop(&game, alpha, beta, i, j, *x))
-            .collect::<Vec<i64>>()
-            .par_iter()
             .min()
             .unwrap()
     }
 
-    fn min_outer_loop(self: &Self, game: &Game, alpha: i64, beta: i64, i: usize) -> i64 {
-        *game
-            .symmetry_range(Symmetry::FlipV)
+    fn min_outer_loop(self: &Self, game: &Game, alpha: i8, beta: i8, i: usize) -> i8 {
+        game.symmetry_range(Symmetry::FlipV)
             .par_iter()
             .map(|x| self.min_inner_loop(&game, alpha, beta, i, *x))
-            .collect::<Vec<i64>>()
-            .par_iter()
             .min()
             .unwrap()
     }
 
-    fn min_search(self: &Self, game: &Game, alpha: i64, beta: i64) -> i64 {
+    fn min_search(self: &Self, game: &Game, alpha: i8, beta: i8) -> i8 {
         match game.winner() {
             Some(Winner::X) => return -10,
             Some(Winner::O) => return 10,
@@ -190,12 +178,9 @@ impl Solver {
             _ => (),
         }
 
-        *game
-            .symmetry_range(Symmetry::FlipH)
+        game.symmetry_range(Symmetry::FlipH)
             .par_iter()
             .map(|x| self.min_outer_loop(&game, alpha, beta, *x))
-            .collect::<Vec<i64>>()
-            .par_iter()
             .min()
             .unwrap()
     }
@@ -203,12 +188,12 @@ impl Solver {
     fn max_loop(
         self: &Self,
         game: &Game,
-        mut alpha: i64,
-        beta: i64,
+        mut alpha: i8,
+        beta: i8,
         i: usize,
         j: usize,
         piece: usize,
-    ) -> i64 {
+    ) -> i8 {
         if game.piece_can_be_placed_at(&piece, i, j) {
             let new_game = game.clone().make_move(i, j, piece);
 
@@ -227,7 +212,7 @@ impl Solver {
         alpha
     }
 
-    fn max_inner_loop(self: &Self, game: &Game, alpha: i64, beta: i64, i: usize, j: usize) -> i64 {
+    fn max_inner_loop(self: &Self, game: &Game, alpha: i8, beta: i8, i: usize, j: usize) -> i8 {
         let my = match self.kind {
             PlayerKind::O => {
                 let (_, o) = game.players.clone();
@@ -239,27 +224,22 @@ impl Solver {
             }
         };
 
-        *my.pieces
+        my.pieces
             .par_iter()
             .map(|x| self.max_loop(game, alpha, beta, i, j, *x))
-            .collect::<Vec<i64>>()
-            .par_iter()
             .max()
             .unwrap()
     }
 
-    fn max_outer_loop(self: &Self, game: &Game, alpha: i64, beta: i64, i: usize) -> i64 {
-        *game
-            .symmetry_range(Symmetry::FlipV)
+    fn max_outer_loop(self: &Self, game: &Game, alpha: i8, beta: i8, i: usize) -> i8 {
+        game.symmetry_range(Symmetry::FlipV)
             .par_iter()
             .map(|x| self.max_inner_loop(&game, alpha, beta, i, *x))
-            .collect::<Vec<i64>>()
-            .par_iter()
             .max()
             .unwrap()
     }
 
-    fn max_search(self: &Self, game: &Game, alpha: i64, beta: i64) -> i64 {
+    fn max_search(self: &Self, game: &Game, alpha: i8, beta: i8) -> i8 {
         match game.winner() {
             Some(Winner::X) => return -10,
             Some(Winner::O) => return 10,
@@ -267,12 +247,9 @@ impl Solver {
             _ => (),
         }
 
-        *game
-            .symmetry_range(Symmetry::FlipH)
+        game.symmetry_range(Symmetry::FlipH)
             .par_iter()
             .map(|x| self.max_outer_loop(&game, alpha, beta, *x))
-            .collect::<Vec<i64>>()
-            .par_iter()
             .max()
             .unwrap()
     }
@@ -286,7 +263,10 @@ impl Solver {
             match self.move_lookup.x.get(symmetry_game) {
                 Some(ijk) => {
                     let (i, j, k) = ijk;
-                    let (x, y) = fliptate_ij((*i, *j), &symmetry);
+                    let (x, y) = index_to_coordinates(fliptate_coordinates(
+                        coordinates_to_index((*i, *j)),
+                        &symmetry,
+                    ));
                     return Some((x, y, *k));
                 }
                 _ => (),
@@ -341,7 +321,7 @@ impl Lookup {
 #[derive(Eq, Copy, Clone)]
 struct BestMove {
     b_move: (usize, usize, usize),
-    score: i64,
+    score: i8,
 }
 
 impl Ord for BestMove {

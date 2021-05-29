@@ -1,4 +1,5 @@
 use crate::game::{Game, Tile};
+use std::convert::TryInto;
 use strum_macros::EnumIter;
 
 // These are ordered so they're most efficient when iterated through
@@ -45,46 +46,108 @@ impl Game {
             && self.tiles == self.fliptate(&Symmetry::Rotate270).tiles
     }
 
-    fn fliptate_helper(self: &Self, f: fn((usize, usize)) -> (usize, usize), i: usize) -> Tile {
-        let (x, y) = f(index_to_coordinates(i));
-        return self.tiles[x][y];
-    }
-
     pub fn fliptate(self: &Self, symmetry: &Symmetry) -> Self {
         let f = match symmetry {
             Symmetry::NoSymmetry => noop,
-            Symmetry::Rotate90 => rotate_ij_by_90,
-            Symmetry::Rotate180 => rotate_ij_by_180,
-            Symmetry::Rotate270 => rotate_ij_by_270,
-            Symmetry::FlipH => flip_ij_horizontally,
-            Symmetry::FlipV => flip_ij_vertically,
+            Symmetry::Rotate90 => rotate_coordinates_by_90,
+            Symmetry::Rotate180 => rotate_coordinates_by_180,
+            Symmetry::Rotate270 => rotate_coordinates_by_270,
+            Symmetry::FlipH => flip_coordinates_horizontally,
+            Symmetry::FlipV => flip_coordinates_vertically,
         };
 
         let mut after = self.clone();
         let flipped = (0..9)
             .collect::<Vec<usize>>()
             .iter()
-            .map(|i| self.fliptate_helper(f, *i))
+            .map(|i| self.tiles.data[f(*i)])
             .collect::<Vec<Tile>>();
 
-        for (i, tile) in flipped.iter().enumerate() {
-            let (x, y) = index_to_coordinates(i);
-            after.tiles[x][y] = *tile;
-        }
+        after.tiles.data = flipped.try_into().unwrap();
         after
     }
 }
 
-pub fn fliptate_ij(c: (usize, usize), symmetry: &Symmetry) -> (usize, usize) {
+pub fn fliptate_coordinates(c: usize, symmetry: &Symmetry) -> usize {
     let f = match symmetry {
         Symmetry::NoSymmetry => noop,
-        Symmetry::Rotate90 => rotate_ij_by_90,
-        Symmetry::Rotate180 => rotate_ij_by_180,
-        Symmetry::Rotate270 => rotate_ij_by_270,
-        Symmetry::FlipH => flip_ij_horizontally,
-        Symmetry::FlipV => flip_ij_vertically,
+        Symmetry::Rotate90 => rotate_coordinates_by_90,
+        Symmetry::Rotate180 => rotate_coordinates_by_180,
+        Symmetry::Rotate270 => rotate_coordinates_by_270,
+        Symmetry::FlipH => flip_coordinates_horizontally,
+        Symmetry::FlipV => flip_coordinates_vertically,
     };
     f(c)
+}
+
+pub fn rotate_coordinates_by_90(c: usize) -> usize {
+    match c {
+        0 => 6,
+        1 => 3,
+        2 => 0,
+        3 => 7,
+        5 => 1,
+        6 => 8,
+        7 => 5,
+        8 => 2,
+        _ => (c),
+    }
+}
+
+fn rotate_coordinates_by_180(c: usize) -> usize {
+    match c {
+        0 => 8,
+        1 => 7,
+        2 => 6,
+        3 => 5,
+        5 => 3,
+        6 => 2,
+        7 => 1,
+        8 => 0,
+        _ => (c),
+    }
+}
+
+fn rotate_coordinates_by_270(c: usize) -> usize {
+    match c {
+        0 => 2,
+        1 => 5,
+        2 => 8,
+        3 => 1,
+        5 => 7,
+        6 => 0,
+        7 => 3,
+        8 => 6,
+        _ => (c),
+    }
+}
+
+fn flip_coordinates_horizontally(c: usize) -> usize {
+    match c {
+        0 => 6,
+        1 => 7,
+        2 => 8,
+        6 => 0,
+        7 => 1,
+        8 => 2,
+        _ => (c),
+    }
+}
+
+fn flip_coordinates_vertically(c: usize) -> usize {
+    match c {
+        0 => 2,
+        2 => 0,
+        3 => 5,
+        5 => 3,
+        6 => 8,
+        8 => 6,
+        _ => (c),
+    }
+}
+
+fn noop(c: usize) -> usize {
+    c
 }
 
 pub fn rotate_ij_by_90(c: (usize, usize)) -> (usize, usize) {
@@ -101,63 +164,22 @@ pub fn rotate_ij_by_90(c: (usize, usize)) -> (usize, usize) {
     }
 }
 
-fn rotate_ij_by_180(c: (usize, usize)) -> (usize, usize) {
+pub fn coordinates_to_index(c: (usize, usize)) -> usize {
     match c {
-        (0, 0) => (2, 2),
-        (0, 1) => (2, 1),
-        (0, 2) => (2, 0),
-        (1, 0) => (1, 2),
-        (1, 2) => (1, 0),
-        (2, 0) => (0, 2),
-        (2, 1) => (0, 1),
-        (2, 2) => (0, 0),
-        _ => (c),
+        (0, 0) => 0,
+        (0, 1) => 1,
+        (0, 2) => 2,
+        (1, 0) => 3,
+        (1, 1) => 4,
+        (1, 2) => 5,
+        (2, 0) => 6,
+        (2, 1) => 7,
+        (2, 2) => 8,
+        _ => 0,
     }
 }
 
-fn rotate_ij_by_270(c: (usize, usize)) -> (usize, usize) {
-    match c {
-        (0, 0) => (0, 2),
-        (0, 1) => (1, 2),
-        (0, 2) => (2, 2),
-        (1, 0) => (0, 1),
-        (1, 2) => (2, 1),
-        (2, 0) => (0, 0),
-        (2, 1) => (1, 0),
-        (2, 2) => (2, 0),
-        _ => (c),
-    }
-}
-
-fn flip_ij_horizontally(c: (usize, usize)) -> (usize, usize) {
-    match c {
-        (0, 0) => (2, 0),
-        (0, 1) => (2, 1),
-        (0, 2) => (2, 2),
-        (2, 0) => (0, 0),
-        (2, 1) => (0, 1),
-        (2, 2) => (0, 2),
-        _ => (c),
-    }
-}
-
-fn flip_ij_vertically(c: (usize, usize)) -> (usize, usize) {
-    match c {
-        (0, 0) => (0, 2),
-        (0, 2) => (0, 0),
-        (1, 0) => (1, 2),
-        (1, 2) => (1, 0),
-        (2, 0) => (2, 2),
-        (2, 2) => (2, 0),
-        _ => (c),
-    }
-}
-
-fn noop(c: (usize, usize)) -> (usize, usize) {
-    c
-}
-
-fn index_to_coordinates(i: usize) -> (usize, usize) {
+pub fn index_to_coordinates(i: usize) -> (usize, usize) {
     match i {
         0 => (0, 0),
         1 => (0, 1),

@@ -39,7 +39,7 @@ pub type Tile = Option<(PlayerKind, usize)>;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Tiles {
-    data: [Tile; 9],
+    pub data: [Tile; 9],
 }
 
 impl Index<usize> for Tiles {
@@ -248,7 +248,7 @@ impl Game {
     }
 
     pub fn piece_can_be_placed(&self, piece: &usize) -> bool {
-        for tile in self.tiles.data().iter() {
+        for tile in self.tiles.data.iter() {
             match tile {
                 Some(other_piece) => {
                     let (_, other_size) = other_piece;
