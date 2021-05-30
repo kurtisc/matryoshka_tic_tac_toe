@@ -68,9 +68,44 @@ fn main() {
                     let now = SystemTime::now();
                     let mut game = Game::new_with_size(number_of_pieces);
                     game = game.make_move(row, col, piece).unwrap();
-                    solver.find_move(&game);
+                    let (i, j, k) = solver.find_move(&game);
+                    let game = game.make_move(i, j, k).unwrap();
+                    do_next_lookup(&game, &solver, &number_of_pieces);
 
                     println! {"{}", now.elapsed().unwrap().as_secs()};
+                }
+            }
+        }
+    }
+}
+
+fn do_next_lookup(game: &Game, solver: &Solver, number_of_pieces: &usize) {
+    let mut game = game.clone();
+    while !game.is_finished() {
+        for row in 0..3 {
+            for col in 0..3 {
+                for piece in 0..*number_of_pieces {
+                    let new_game = game.clone().make_move(row, col, piece);
+                    match new_game {
+                        Ok(_) => {
+                            game = game.make_move(row, col, piece).unwrap();
+                            if game.is_finished() {
+                                return;
+                            }
+                            let (i, j, k) = solver.find_move(&game);
+                            let new_game = game.clone().make_move(i, j, k);
+                            match new_game {
+                                Ok(_) => {
+                                    game = game.clone().make_move(i, j, k).unwrap();
+                                    if game.is_finished() {
+                                        return;
+                                    }
+                                }
+                                _ => (),
+                            }
+                        }
+                        _ => (),
+                    }
                 }
             }
         }
