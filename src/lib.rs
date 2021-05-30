@@ -122,7 +122,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn ai_wins() {
         let mut game = Game::new_with_size(4);
         let solver = Solver::new();
