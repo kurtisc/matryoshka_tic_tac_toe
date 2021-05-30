@@ -86,20 +86,18 @@ impl Solver {
         let mut best_score = std::i8::MIN;
         let mut best_move = (0, 0, 0);
 
-        if game.piece_can_be_placed_at(&piece, i, j) {
-            let new_game = game.clone().make_move(i, j, piece);
+        let new_game = game.clone().make_move(i, j, piece);
 
-            match new_game {
-                Ok(x) => {
-                    let tmp_score = self.min_search(&x, std::i8::MIN, std::i8::MAX);
+        match new_game {
+            Ok(x) => {
+                let tmp_score = self.min_search(&x, std::i8::MIN, std::i8::MAX);
 
-                    if tmp_score > best_score {
-                        best_score = tmp_score;
-                        best_move = (i, j, piece);
-                    }
+                if tmp_score > best_score {
+                    best_score = tmp_score;
+                    best_move = (i, j, piece);
                 }
-                _ => (),
             }
+            _ => (),
         }
 
         BestMove {
@@ -124,20 +122,18 @@ impl Solver {
             _ => (),
         }
 
-        if game.piece_can_be_placed_at(&piece, i, j) {
-            let new_game = game.clone().make_move(i, j, piece);
+        let new_game = game.clone().make_move(i, j, piece);
 
-            match new_game {
-                Ok(x) => {
-                    let score = self.max_search(&x, alpha, beta);
+        match new_game {
+            Ok(x) => {
+                let score = self.max_search(&x, alpha, beta);
 
-                    beta = min(score, beta);
-                    if alpha > beta {
-                        return beta;
-                    }
+                beta = min(score, beta);
+                if alpha > beta {
+                    return beta;
                 }
-                _ => (),
             }
+            _ => (),
         }
         beta
     }
@@ -194,20 +190,18 @@ impl Solver {
         j: usize,
         piece: usize,
     ) -> i8 {
-        if game.piece_can_be_placed_at(&piece, i, j) {
-            let new_game = game.clone().make_move(i, j, piece);
+        let new_game = game.clone().make_move(i, j, piece);
 
-            match new_game {
-                Ok(x) => {
-                    let score = self.min_search(&x, alpha, beta);
+        match new_game {
+            Ok(x) => {
+                let score = self.min_search(&x, alpha, beta);
 
-                    alpha = max(score, alpha);
-                    if alpha > beta {
-                        return alpha;
-                    }
+                alpha = max(score, alpha);
+                if alpha > beta {
+                    return alpha;
                 }
-                _ => (),
             }
+            _ => (),
         }
         alpha
     }

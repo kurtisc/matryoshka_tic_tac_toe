@@ -226,27 +226,6 @@ impl Game {
         Some(Winner::Tie)
     }
 
-    pub fn piece_can_be_placed_at(&self, piece: &usize, i: usize, j: usize) -> bool {
-        let (x, o) = &self.players;
-
-        if self.current_player_kind == PlayerKind::X {
-            match x.pieces.binary_search(&piece) {
-                Ok(_) => (),
-                Err(_) => return false,
-            }
-        } else {
-            match o.pieces.binary_search(&piece) {
-                Ok(_) => (),
-                Err(_) => return false,
-            }
-        }
-
-        match self.tiles[i][j] {
-            Some((_, x)) => piece > &x,
-            _ => true,
-        }
-    }
-
     pub fn piece_can_be_placed(&self, piece: &usize) -> bool {
         for tile in self.tiles.data.iter() {
             match tile {
