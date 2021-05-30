@@ -65,35 +65,43 @@ pub fn read_line() -> String {
     input
 }
 
-pub fn print_tiles(tiles: &Tiles) {
-    print!("  ");
-    for j in 0..tiles[0].len() as u8 {
-        print!(" {}", (b'A' + j) as char);
-    }
-    println!();
+impl Tiles {
+    pub fn print(self: &Self) {
+        print!("  ");
+        for j in 0..self[0].len() as u8 {
+            print!(" {}", (b'A' + j) as char);
+        }
+        println!();
 
-    for (i, tile) in tiles.data.iter().enumerate() {
-        print!(" {}", i + 1);
-        print!(
-            " {}",
-            match tile {
-                Some((PlayerKind::X, _)) => "x",
-                Some((PlayerKind::O, _)) => "o",
-                _ => "_",
+        for i in 0..3 {
+            print!(" {}", i + 1);
+            for j in 0..3 {
+                let tile = self[i][j];
+                print!(
+                    " {}",
+                    match tile {
+                        Some((PlayerKind::X, _)) => "x",
+                        Some((PlayerKind::O, _)) => "o",
+                        _ => "_",
+                    }
+                );
             }
-        );
 
-        print!("    ");
+            print!("    ");
 
-        print!(
-            " {}",
-            match tile {
-                Some((_, x)) => x.to_string(),
-                _ => "_".to_string(),
+            for j in 0..3 {
+                let tile = self[i][j];
+                print!(
+                    " {}",
+                    match tile {
+                        Some((_, x)) => x.to_string(),
+                        _ => "_".to_string(),
+                    }
+                );
             }
-        );
+            println!();
+        }
+
         println!();
     }
-
-    println!();
 }

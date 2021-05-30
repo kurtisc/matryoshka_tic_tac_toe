@@ -2,7 +2,7 @@
 const SOLVER_NUMBER_OF_PIECES: usize = 5;
 
 use matryoshka_tic_tac_toe::game::{Game, PlayerKind, Winner};
-use matryoshka_tic_tac_toe::io::{print_tiles, prompt_move};
+use matryoshka_tic_tac_toe::io::*;
 use matryoshka_tic_tac_toe::solver::Solver;
 
 fn main() {
@@ -10,7 +10,7 @@ fn main() {
     let solver = Solver::new();
 
     while !game.is_finished() {
-        print_tiles(game.tiles());
+        game.tiles().print();
         let (x, o) = game.players.clone();
         x.print_pieces();
         o.print_pieces();
@@ -34,7 +34,7 @@ fn main() {
         }
     }
 
-    print_tiles(game.tiles());
+    game.tiles().print();
 
     match game.winner().expect("A finished game should have winner") {
         Winner::X => println!("x wins!"),
