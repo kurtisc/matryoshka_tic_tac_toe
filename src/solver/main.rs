@@ -1,4 +1,4 @@
-// For 6 pieces, the solver will take a multiple days to run
+// For 7 pieces, the solver will take a multiple days to run
 const SOLVER_NUMBER_OF_PIECES: usize = 6;
 
 use matryoshka_tic_tac_toe::game::{Game, PlayerKind, Winner};
