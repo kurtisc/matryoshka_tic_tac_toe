@@ -1,6 +1,7 @@
 extern crate rayon;
 use crate::game::{Game, PlayerKind, Winner};
 use crate::symmetry::*;
+use arc_swap::{ArcSwap, ArcSwapAny, Cache};
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
@@ -8,29 +9,38 @@ use std::cmp::{max, min, Ordering};
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::prelude::*;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 use strum::IntoEnumIterator;
 
-#[derive(Clone)]
 pub struct Solver {
-    move_lookup: Lookup,
-    write_lookup: Option<Arc<Mutex<Lookup>>>,
+    lookup_is_writable: bool,
+    lookup: Arc<ArcSwapAny<Arc<Box<Lookup>>>>,
     pub kind: PlayerKind,
 }
 
 impl Solver {
     pub fn new() -> Self {
         Self {
-            move_lookup: Lookup::new(),
-            write_lookup: None,
+            lookup_is_writable: false,
+            lookup: Arc::from(ArcSwap::from_pointee(Box::new(Lookup::new()))),
             kind: PlayerKind::O,
         }
     }
 
     pub fn new_overwrite_lookup() -> Self {
         Self {
-            move_lookup: Lookup::new(),
-            write_lookup: Some(Arc::new(Mutex::new(Lookup::new()))),
+            lookup_is_writable: true,
+            lookup: Arc::from(ArcSwap::from_pointee(Box::new(Lookup::new()))),
+            kind: PlayerKind::O,
+        }
+    }
+
+    pub fn new_distinct_lookup(path: String) -> Self {
+        Self {
+            lookup_is_writable: true,
+            lookup: Arc::from(ArcSwap::from_pointee(Box::new(Lookup::new_distinct(
+                path.clone(),
+            )))),
             kind: PlayerKind::O,
         }
     }
@@ -248,13 +258,17 @@ impl Solver {
             .unwrap()
     }
 
-    fn check_lookup(self: &Self, game: &Game) -> Option<(usize, usize, usize)> {
-        if self.move_lookup.x.contains_key(&game) {
-            return Some(self.move_lookup.x[&game]);
+    pub fn check_lookup(self: &Self, game: &Game) -> Option<(usize, usize, usize)> {
+        let lookup = Arc::clone(&self.lookup);
+        let mut lookup = Cache::new(lookup);
+        let lookup = &lookup.load().data.x;
+
+        if lookup.contains_key(&game) {
+            return Some(lookup[&game]);
         }
         for symmetry in Symmetry::iter() {
             let symmetry_game = &game.clone().fliptate(&symmetry);
-            match self.move_lookup.x.get(symmetry_game) {
+            match lookup.get(symmetry_game) {
                 Some(ijk) => {
                     let (i, j, k) = ijk;
                     let (x, y) = index_to_coordinates(fliptate_coordinates(
@@ -272,43 +286,74 @@ impl Solver {
     }
 
     fn add_to_lookup(self: &Self, game: &Game, ideal_move: (usize, usize, usize)) {
-        match &self.write_lookup {
-            Some(l) => {
-                let mut shared_lookup = l.lock().unwrap();
-                shared_lookup.x.insert(game.clone(), ideal_move);
-                shared_lookup.write()
-            }
-            _ => (),
+        let lookup = Arc::clone(&self.lookup);
+        let mut lookup = Cache::new(lookup);
+        let lookup = &lookup.load();
+        let path = &lookup.path;
+
+        if self.lookup_is_writable {
+            let mut lookup: Box<Lookup> = Box::new(Lookup::new_distinct(path.to_string()));
+            lookup.data.x.insert(game.clone(), ideal_move);
+            lookup.clone().write();
+            self.lookup.store(Arc::from(lookup));
         };
     }
 }
 
 #[serde_as]
 #[derive(Serialize, Deserialize, Debug, Clone)]
-struct Lookup {
+struct LookupData {
     #[serde_as(as = "Vec<(_, _)>")]
     x: HashMap<Game, (usize, usize, usize)>,
 }
 
+#[derive(Clone)]
+struct Lookup {
+    data: LookupData,
+    path: String,
+}
+
 impl Lookup {
     fn write(self: &Self) {
-        let mut f = File::create("data/lookup.json").unwrap();
-        f.write_all(&serde_json::to_string(self).unwrap().into_bytes())
+        let mut f = File::create(self.path.clone()).unwrap();
+        f.write_all(&serde_json::to_string(&self.data).unwrap().into_bytes())
             .unwrap();
         f.sync_all().unwrap();
     }
 
-    fn new() -> Self {
-        let f = File::open("data/lookup.json");
-        match f {
+    fn new_distinct(path: String) -> Self {
+        let f = File::open(&path.clone());
+        let data = match f {
             Ok(mut file) => {
                 let mut contents = String::new();
                 match file.read_to_string(&mut contents) {
                     Ok(_) => serde_json::from_str(&contents.to_string()).unwrap(),
-                    _ => Lookup { x: HashMap::new() },
+                    _ => LookupData { x: HashMap::new() },
                 }
             }
-            _ => Lookup { x: HashMap::new() },
+            _ => LookupData { x: HashMap::new() },
+        };
+        Lookup {
+            data: data,
+            path: path,
+        }
+    }
+
+    fn new() -> Self {
+        let f = File::open("data/lookup.json");
+        let data = match f {
+            Ok(mut file) => {
+                let mut contents = String::new();
+                match file.read_to_string(&mut contents) {
+                    Ok(_) => serde_json::from_str(&contents.to_string()).unwrap(),
+                    _ => LookupData { x: HashMap::new() },
+                }
+            }
+            _ => LookupData { x: HashMap::new() },
+        };
+        Lookup {
+            data: data,
+            path: "data/lookup.json".to_string(),
         }
     }
 }

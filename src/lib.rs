@@ -8,6 +8,7 @@ mod tests {
     use crate::game::{Game, PlayerKind, Winner};
     use crate::solver::Solver;
     use crate::symmetry::Symmetry;
+    use std::fs;
 
     #[test]
     fn col_3_o_wins() {
@@ -276,5 +277,62 @@ mod tests {
         game = game.make_move(0, 0, 2).unwrap();
         let new_game = game.clone().fliptate(&Symmetry::FlipV);
         assert_eq!(game, new_game.fliptate(&Symmetry::FlipV));
+    }
+
+    #[test]
+    fn lookup_symmetries() {
+        match fs::remove_file("./data/test_lookup.json".to_string()) {
+            _ => (),
+        }
+        let solver = Solver::new_distinct_lookup("./data/test_lookup.json".to_string());
+
+        // Make first move in top-left corner
+        let mut game = Game::new_with_size(3);
+        game = game.make_move(0, 0, 2).unwrap();
+        solver.find_move(&game);
+        let s = solver.check_lookup(&game);
+        assert!(s.is_some());
+
+        // Check that the symmetries can be found
+        let mut game = Game::new_with_size(3);
+        game = game.make_move(2, 2, 2).unwrap();
+        let s = solver.check_lookup(&game);
+        assert!(s.is_some());
+
+        let mut game = Game::new_with_size(3);
+        game = game.make_move(0, 2, 2).unwrap();
+        let s = solver.check_lookup(&game);
+        assert!(s.is_some());
+
+        let mut game = Game::new_with_size(3);
+        game = game.make_move(2, 0, 2).unwrap();
+        let s = solver.check_lookup(&game);
+        assert!(s.is_some());
+
+        // Make first move in top-middle
+        let mut game = Game::new_with_size(3);
+        game = game.make_move(0, 1, 2).unwrap();
+        solver.find_move(&game);
+        let s = solver.check_lookup(&game);
+        assert!(s.is_some());
+
+        // Check that the symmetries can be found
+        let mut game = Game::new_with_size(3);
+        game = game.make_move(1, 2, 2).unwrap();
+        let s = solver.check_lookup(&game);
+        assert!(s.is_some());
+
+        let mut game = Game::new_with_size(3);
+        game = game.make_move(1, 0, 2).unwrap();
+        let s = solver.check_lookup(&game);
+        assert!(s.is_some());
+
+        let mut game = Game::new_with_size(3);
+        game = game.make_move(2, 1, 2).unwrap();
+        let s = solver.check_lookup(&game);
+        assert!(s.is_some());
+        match fs::remove_file("./data/test_lookup.json".to_string()) {
+            _ => (),
+        }
     }
 }
