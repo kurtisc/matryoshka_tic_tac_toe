@@ -261,6 +261,7 @@ impl Solver {
                         coordinates_to_index((*i, *j)),
                         &symmetry,
                     ));
+                    self.add_to_lookup(&game, (x, y, *k));
                     return Some((x, y, *k));
                 }
                 _ => (),
