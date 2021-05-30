@@ -1,5 +1,6 @@
 const NUMBER_OF_PIECES: usize = 6;
 
+use core::cmp::max;
 use serde::{Deserialize, Serialize};
 use std::ops::{Index, IndexMut};
 
@@ -255,6 +256,38 @@ impl Game {
 
     pub fn current_player_kind(&self) -> PlayerKind {
         self.current_player_kind
+    }
+
+    pub fn get_number_of_pieces(&self) -> usize {
+        1 + self.get_biggest_piece()
+    }
+
+    pub fn get_biggest_piece(&self) -> usize {
+        let (x, o) = self.players.clone();
+        let mut biggest_placed_piece = 0;
+        let tiles = self.tiles.data.iter();
+        for tile in tiles {
+            match tile {
+                Some((_, size)) => {
+                    if *size > biggest_placed_piece {
+                        biggest_placed_piece = *size;
+                    }
+                }
+                _ => (),
+            }
+        }
+        max(
+            biggest_placed_piece,
+            *max(o.pieces.iter().max(), x.pieces.iter().max()).unwrap(),
+        )
+    }
+
+    pub fn get_turn_count(&self) -> usize {
+        let (x, o) = self.players.clone();
+        let max_turns = 2 * self.get_number_of_pieces();
+
+        let remaining_turns = x.pieces.len() + o.pieces.len();
+        (max_turns - remaining_turns) + 1
     }
 }
 

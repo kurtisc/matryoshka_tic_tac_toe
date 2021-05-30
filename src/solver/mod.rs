@@ -45,19 +45,46 @@ impl Solver {
         }
     }
 
+    fn heuristic_move(self: &Self, game: &Game) -> Option<(usize, usize, usize)> {
+        let (my, their_kind) = match self.kind {
+            PlayerKind::O => {
+                let (_, o) = game.players.clone();
+                (o, PlayerKind::X)
+            }
+            PlayerKind::X => {
+                let (x, _) = game.players.clone();
+                (x, PlayerKind::O)
+            }
+        };
+
+        if game.get_turn_count() == 2 {
+            if game.tiles[1][1] != Some((their_kind, game.get_biggest_piece())) {
+                return Some((1, 1, *my.pieces.iter().max().unwrap()));
+            } else {
+                return Some((1, 0, *my.pieces.iter().max().unwrap() - 1));
+            }
+        }
+        None
+    }
+
     pub fn find_move(self: &Self, game: &Game) -> (usize, usize, usize) {
         let before_state = game.clone();
 
         match self.check_lookup(&before_state) {
             Some(ijk) => ijk,
             _ => {
-                let (i, j, k) = game
-                    .symmetry_range(Symmetry::FlipH)
-                    .par_iter()
-                    .map(|x| self.min_max_outer_loop(game, *x))
-                    .max()
-                    .unwrap()
-                    .b_move;
+                let m = self.heuristic_move(&before_state);
+                let (i, j, k) = match m {
+                    Some((i, j, k)) => (i, j, k),
+                    _ => {
+                        game.symmetry_range(Symmetry::FlipH)
+                            .par_iter()
+                            .map(|x| self.min_max_outer_loop(game, *x))
+                            .max()
+                            .unwrap()
+                            .b_move
+                    }
+                };
 
                 self.add_to_lookup(&game, (i, j, k));
                 (i, j, k)
