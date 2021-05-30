@@ -40,4 +40,6 @@ You can't win. It is hard to avoid losing.
     - `src/lookup-generator/main.rs -> target/release/lookup-generator --help`
 
 
+## Example
+
 ![Example game](media/example-game.png)
