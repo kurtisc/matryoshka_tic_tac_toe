@@ -121,6 +121,85 @@ mod tests {
         assert_eq!(game.winner().unwrap(), Winner::X);
     }
 
+    #[ignore]
+    #[test]
+    fn ai_avoids_loss() {
+        // A former regression
+        let solver = Solver::new();
+
+        // 1st rotation
+        let mut game = Game::new_with_size(6);
+        game = game.make_move(1, 1, 5).unwrap();
+
+        let (i, j, k) = solver.find_move(&game);
+        game = game.make_move(i, j, k).unwrap();
+
+        game = game.make_move(2, 2, 3).unwrap();
+
+        let (i, j, k) = solver.find_move(&game);
+        game = game.make_move(i, j, k).unwrap();
+
+        game = game.make_move(0, 0, 4).unwrap();
+
+        if game.winner() == Some(Winner::X) {
+            assert!(false);
+        }
+
+        // 2nd rotation
+        let mut game = Game::new_with_size(6);
+        game = game.make_move(1, 1, 5).unwrap();
+
+        let (i, j, k) = solver.find_move(&game);
+        game = game.make_move(i, j, k).unwrap();
+
+        game = game.make_move(2, 0, 3).unwrap();
+
+        let (i, j, k) = solver.find_move(&game);
+        game = game.make_move(i, j, k).unwrap();
+
+        game = game.make_move(0, 2, 4).unwrap();
+
+        if game.winner() == Some(Winner::X) {
+            assert!(false);
+        }
+
+        // 3rd rotation
+        let mut game = Game::new_with_size(6);
+        game = game.make_move(1, 1, 5).unwrap();
+
+        let (i, j, k) = solver.find_move(&game);
+        game = game.make_move(i, j, k).unwrap();
+
+        game = game.make_move(0, 0, 3).unwrap();
+
+        let (i, j, k) = solver.find_move(&game);
+        game = game.make_move(i, j, k).unwrap();
+
+        game = game.make_move(2, 2, 4).unwrap();
+
+        if game.winner() == Some(Winner::X) {
+            assert!(false);
+        }
+
+        // 4th rotation
+        let mut game = Game::new_with_size(6);
+        game = game.make_move(1, 1, 5).unwrap();
+
+        let (i, j, k) = solver.find_move(&game);
+        game = game.make_move(i, j, k).unwrap();
+
+        game = game.make_move(0, 2, 3).unwrap();
+
+        let (i, j, k) = solver.find_move(&game);
+        game = game.make_move(i, j, k).unwrap();
+
+        game = game.make_move(2, 0, 4).unwrap();
+
+        if game.winner() == Some(Winner::X) {
+            assert!(false);
+        }
+    }
+
     #[test]
     fn ai_wins() {
         let mut game = Game::new_with_size(4);

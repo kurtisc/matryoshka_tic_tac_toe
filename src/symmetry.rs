@@ -13,6 +13,16 @@ pub enum Symmetry {
     NoSymmetry,
 }
 
+impl Symmetry {
+    pub fn reverse(self: Self) -> Symmetry {
+        match self {
+            Symmetry::Rotate90 => Symmetry::Rotate270,
+            Symmetry::Rotate270 => Symmetry::Rotate90,
+            _ => self,
+        }
+    }
+}
+
 impl Game {
     pub fn symmetry_range(&self, symmetry: Symmetry) -> Vec<usize> {
         if self.has_rotational_symmetry() {

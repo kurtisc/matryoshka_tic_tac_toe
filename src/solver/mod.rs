@@ -309,7 +309,7 @@ impl Solver {
                     let (i, j, k) = ijk;
                     let (x, y) = index_to_coordinates(fliptate_coordinates(
                         coordinates_to_index((*i, *j)),
-                        &symmetry,
+                        &symmetry.reverse(),
                     ));
                     self.add_to_lookup(&game, (x, y, *k));
                     return Some((x, y, *k));
