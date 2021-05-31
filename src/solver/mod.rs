@@ -229,6 +229,15 @@ impl Solver {
     ) -> i8 {
         let new_game = game.clone().make_move(i, j, piece);
 
+        match game.tiles[i][j] {
+            Some((k, _)) => {
+                if k == self.kind {
+                    return alpha;
+                }
+            }
+            _ => (),
+        }
+
         match new_game {
             Ok(x) => {
                 let score = self.min_search(&x, alpha, beta);
