@@ -1,13 +1,49 @@
 // For 7 pieces, the solver will take a multiple days to run
 const SOLVER_NUMBER_OF_PIECES: usize = 6;
 
+extern crate getopts;
+use getopts::Options;
 use matryoshka_tic_tac_toe::game::{Game, PlayerKind, Winner};
 use matryoshka_tic_tac_toe::io::*;
 use matryoshka_tic_tac_toe::solver::Solver;
+use std::env;
+
+fn print_usage(program: &str, opts: Options) {
+    let brief = format!("Usage: {} FILE [options]", program);
+    println!("{}", opts.usage(&brief));
+}
 
 fn main() {
-    let mut game = Game::new_with_size(SOLVER_NUMBER_OF_PIECES);
     let solver = Solver::new();
+    let args: Vec<String> = env::args().collect();
+    let program = args[0].clone();
+    let mut number = SOLVER_NUMBER_OF_PIECES;
+
+    let mut opts = Options::new();
+    opts.optopt(
+        "n",
+        "number",
+        "How many pieces to use",
+        "PIECES",
+    );
+
+    opts.optflag("h", "help", "print this help menu");
+    match opts.parse(&args[1..]) {
+        Ok(m) => {
+            if m.opt_present("h") {
+                print_usage(&program, opts);
+                return;
+            }
+            if m.opt_present("n") {
+                match m.opt_get::<usize>("n") {
+                    Ok(Some(n)) => number = n,
+                    _ => (),
+                }
+            }
+        }
+        _ => (),
+    };
+    let mut game = Game::new_with_size(number);
 
     while !game.is_finished() {
         game.tiles().print();
