@@ -27,6 +27,7 @@ fn main() {
         piece: 0,
     };
     let mut until: usize = 7;
+    let mut deep = false;
 
     let args: Vec<String> = env::args().collect();
     let program = args[0].clone();
@@ -38,6 +39,9 @@ fn main() {
         "Run the generator until this many pieces have been solved",
         "PIECES",
     );
+
+    opts.optflag("d", "deep", "Run the generator past the top-level moves");
+
     opts.optflag("h", "help", "print this help menu");
     match opts.parse(&args[1..]) {
         Ok(m) => {
@@ -50,6 +54,9 @@ fn main() {
                     Ok(Some(u)) => until = u,
                     _ => (),
                 }
+            }
+            if m.opt_present("d") {
+                deep = true;
             }
         }
         _ => (),
@@ -70,7 +77,9 @@ fn main() {
                     game = game.make_move(row, col, piece).unwrap();
                     let (i, j, k) = solver.find_move(&game);
                     let mut game = game.make_move(i, j, k).unwrap();
-                    do_next_lookup(&mut game, &solver, &number_of_pieces);
+                    if deep {
+                        do_next_lookup(&mut game, &solver, &number_of_pieces);
+                    }
 
                     println! {"{}", now.elapsed().unwrap().as_secs()};
                 }
