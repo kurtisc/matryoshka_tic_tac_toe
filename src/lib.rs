@@ -121,10 +121,9 @@ mod tests {
         assert_eq!(game.winner().unwrap(), Winner::X);
     }
 
-    #[ignore]
     #[test]
     fn ai_avoids_loss() {
-        // A former regression
+        // Former regressions
         let solver = Solver::new();
 
         // 1st rotation
@@ -197,6 +196,50 @@ mod tests {
 
         if game.winner() == Some(Winner::X) {
             assert!(false);
+        }
+
+        let solver = Solver::new();
+
+        // 1st rotation
+        let mut game = Game::new_with_size(6);
+        game = game.make_move(1, 1, 5).unwrap();
+
+        let (i, j, k) = solver.find_move(&game);
+        game = game.make_move(i, j, k).unwrap();
+
+        game = game.make_move(0, 1, 3).unwrap();
+        println!("{:?}", game.clone().tiles);
+
+        let (i, j, k) = solver.find_move(&game);
+        game = game.make_move(i, j, k).unwrap();
+
+        let game = game.make_move(2, 1, 0);
+
+        if game.is_ok() {
+            if game.unwrap().winner() == Some(Winner::X) {
+                assert!(false);
+            }
+        }
+
+        // 2nd rotation
+        let mut game = Game::new_with_size(6);
+        game = game.make_move(1, 1, 5).unwrap();
+
+        let (i, j, k) = solver.find_move(&game);
+        game = game.make_move(i, j, k).unwrap();
+
+        game = game.make_move(2, 1, 3).unwrap();
+        println!("{:?}", game.clone().tiles);
+
+        let (i, j, k) = solver.find_move(&game);
+        game = game.make_move(i, j, k).unwrap();
+
+        let game = game.make_move(0, 1, 0);
+
+        if game.is_ok() {
+            if game.unwrap().winner() == Some(Winner::X) {
+                assert!(false);
+            }
         }
     }
 
